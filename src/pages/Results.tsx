@@ -8,23 +8,11 @@ import { useSparkData } from "@/hooks/useSparkData";
 import Header from "@/components/Header";
 
 const Results: React.FC = () => {
-  const { events, eventTemplates } = useSparkData();
+  const { events } = useSparkData();
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
 
-  // Merge events and templates by event name (show event result if exists, else template)
-  const eventMap = new Map();
-  events.forEach(event => {
-    eventMap.set(event.name, { ...event, isResult: true });
-  });
-  eventTemplates.forEach(template => {
-    if (!eventMap.has(template.name)) {
-      eventMap.set(template.name, { ...template, isResult: false });
-    }
-  });
-  const mergedEvents = Array.from(eventMap.values());
-
-  const filteredEvents = mergedEvents.filter(event => {
+  const filteredEvents = events.filter(event => {
     const categoryMatch = filterCategory === 'all' || event.category === filterCategory;
     const typeMatch = filterType === 'all' || event.type === filterType;
     return categoryMatch && typeMatch;
@@ -113,7 +101,7 @@ const Results: React.FC = () => {
         <div className="grid gap-4">
           {filteredEvents.map((event, index) => (
             <Card 
-              key={event.id || event.name} 
+              key={event.id} 
               className="hover:shadow-lg transition-all duration-300 animate-slide-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
@@ -123,53 +111,37 @@ const Results: React.FC = () => {
                     <div className="flex items-center space-x-3 mb-2">
                       <Trophy className="h-5 w-5 text-yellow-500" />
                       <h3 className="text-xl font-semibold text-foreground">{event.name}</h3>
-                      {event.isResult ? (
-                        <Badge className={getPositionBadge(event.position)}>
-                          {event.position === 1 ? '🥇 1st' : 
-                           event.position === 2 ? '🥈 2nd' : 
-                           event.position === 3 ? '🥉 3rd' : 
-                           `#${event.position}`}
-                        </Badge>
-                      ) : null}
+                      <Badge className={getPositionBadge(event.position)}>
+                        {event.position === 1 ? '🥇 1st' : 
+                         event.position === 2 ? '🥈 2nd' : 
+                         event.position === 3 ? '🥉 3rd' : 
+                         `#${event.position}`}
+                      </Badge>
                     </div>
                     <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                       <div className="flex items-center space-x-1">
                         <Calendar className="h-4 w-4" />
-                        {event.isResult && event.date ? (
-                          <span>{new Date(event.date).toLocaleDateString()}</span>
-                        ) : event.time ? (
-                          <span>Time: {event.time}</span>
-                        ) : null}
+                        <span>{new Date(event.date).toLocaleDateString()}</span>
                       </div>
                       <div className="flex items-center space-x-1">
                         <Users className="h-4 w-4" />
                         <span>{event.category} • {event.type}</span>
                       </div>
-                      {!event.isResult && event.venue && (
-                        <div className="flex items-center space-x-1">
-                          <span>Venue: {event.venue}</span>
-                        </div>
-                      )}
                     </div>
-                    {!event.isResult && event.description && (
-                      <div className="text-sm text-muted-foreground mt-2">{event.description}</div>
-                    )}
                   </div>
-                  {event.isResult ? (
-                    <div className="flex items-center space-x-4">
-                      <div className="text-right">
-                        <Badge 
-                          variant="outline" 
-                          className={`border-${getHouseColor(event.house)} text-${getHouseColor(event.house)}-foreground bg-${getHouseColor(event.house)}/10`}
-                        >
-                          {event.house}
-                        </Badge>
-                        <div className="text-lg font-bold text-foreground mt-1">
-                          +{event.points} pts
-                        </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <Badge 
+                        variant="outline" 
+                        className={`border-${getHouseColor(event.house)} text-${getHouseColor(event.house)}-foreground bg-${getHouseColor(event.house)}/10`}
+                      >
+                        {event.house}
+                      </Badge>
+                      <div className="text-lg font-bold text-foreground mt-1">
+                        +{event.points} pts
                       </div>
                     </div>
-                  ) : null}
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -6,19 +6,7 @@ import { useSparkData } from "@/hooks/useSparkData";
 import Header from "@/components/Header";
 
 const Events = () => {
-  const { events, eventTemplates } = useSparkData();
-
-  // Merge events and templates by event name (show event result if exists, else template)
-  const eventMap = new Map();
-  events.forEach(event => {
-    eventMap.set(event.name, { ...event, isResult: true });
-  });
-  eventTemplates.forEach(template => {
-    if (!eventMap.has(template.name)) {
-      eventMap.set(template.name, { ...template, isResult: false });
-    }
-  });
-  const mergedEvents = Array.from(eventMap.values());
+  const { events } = useSparkData();
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,8 +17,8 @@ const Events = () => {
           <p className="text-muted-foreground">Complete list of SPARK events</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mergedEvents.map((event, index) => (
-            <Card key={event.id || event.name} className="hover:shadow-lg transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+          {events.map((event, index) => (
+            <Card key={event.id} className="hover:shadow-lg transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span className="text-lg">{event.name}</span>
@@ -47,31 +35,15 @@ const Events = () => {
                     {event.type}
                   </Badge>
                 </div>
-                {event.isResult ? (
-                  <>
-                    <div className="text-sm text-muted-foreground">
-                      Date: {new Date(event.date).toLocaleDateString()}
-                    </div>
-                    <div className="text-sm">
-                      Points: <span className="font-semibold text-primary">{event.points}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      House: {event.house}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    {event.time && (
-                      <div className="text-sm text-muted-foreground">Time: {event.time}</div>
-                    )}
-                    {event.venue && (
-                      <div className="text-sm text-muted-foreground">Venue: {event.venue}</div>
-                    )}
-                    {event.description && (
-                      <div className="text-sm text-muted-foreground">{event.description}</div>
-                    )}
-                  </>
-                )}
+                <div className="text-sm text-muted-foreground">
+                  Date: {new Date(event.date).toLocaleDateString()}
+                </div>
+                <div className="text-sm">
+                  Points: <span className="font-semibold text-primary">{event.points}</span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  House: {event.house}
+                </div>
               </CardContent>
             </Card>
           ))}

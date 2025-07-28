@@ -70,6 +70,28 @@ const Admin: React.FC = () => {
     position: ''
   });
 
+  // Multi-winner event result form state
+  const [multiWinners, setMultiWinners] = useState([
+    { house: '', position: 1 },
+    { house: '', position: 2 },
+    { house: '', position: 3 },
+  ]);
+
+  // Add a new winner row
+  const addWinnerRow = () => {
+    setMultiWinners(prev => [...prev, { house: '', position: prev.length + 1 }]);
+  };
+
+  // Remove a winner row by index
+  const removeWinnerRow = (idx: number) => {
+    setMultiWinners(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // Update a winner row
+  const updateWinnerRow = (idx: number, field: string, value: any) => {
+    setMultiWinners(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -106,6 +128,52 @@ const Admin: React.FC = () => {
       house: '',
       position: ''
     });
+  };
+
+  // New multi-winner event result submit
+  const handleMultiWinnerSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!eventForm.name || !eventForm.category || !eventForm.type) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all required fields for the event.",
+        variant: "destructive"
+      });
+      return;
+    }
+    const validWinners = multiWinners.filter(w => w.house && w.position);
+    if (validWinners.length === 0) {
+      toast({
+        title: "No Winners",
+        description: "Please add at least one winner.",
+        variant: "destructive"
+      });
+      return;
+    }
+    try {
+      for (const winner of validWinners) {
+        await addEvent({
+          name: eventForm.name,
+          category: eventForm.category as 'Junior' | 'Middle' | 'Senior',
+          type: eventForm.type as 'Individual' | 'Group',
+          house: winner.house,
+          position: Number(winner.position),
+          date: new Date().toISOString().split('T')[0]
+        });
+      }
+      toast({
+        title: "Event Results Added",
+        description: `${validWinners.length} winner(s) added for ${eventForm.name}`
+      });
+      setEventForm({ name: '', category: '', type: '', house: '', position: '' });
+      setMultiWinners([
+        { house: '', position: 1 },
+        { house: '', position: 2 },
+        { house: '', position: 3 },
+      ]);
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
   const recentEvents = events.slice(-5).reverse();
@@ -215,41 +283,40 @@ const Admin: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleMultiWinnerSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                       <Label htmlFor="eventName">Event Name</Label>
-                       <div className="relative">
-                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                         <Select value={eventForm.name} onValueChange={(value) => setEventForm({...eventForm, name: value})}>
-                           <SelectTrigger className="pl-10">
-                             <SelectValue placeholder="Search and select event" />
-                           </SelectTrigger>
-                           <SelectContent>
-                             <div className="p-2">
-                               <Input
-                                 placeholder="Search events..."
-                                 value={eventSearchQuery}
-                                 onChange={(e) => setEventSearchQuery(e.target.value)}
-                                 className="mb-2"
-                               />
-                             </div>
-                             {eventTemplates
-                               .filter(event => 
-                                 event.name.toLowerCase().includes(eventSearchQuery.toLowerCase())
-                               )
-                               .map((event) => (
-                                 <SelectItem key={event.id} value={event.name}>
-                                   {event.name} ({event.category})
-                                 </SelectItem>
-                               ))}
-                           </SelectContent>
-                         </Select>
-                       </div>
-                     </div>
-                    
                     <div className="space-y-2">
-                      <Label htmlFor="category">Grade Category</Label>
+                      <Label htmlFor="eventName">Event Name</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Select value={eventForm.name} onValueChange={(value) => setEventForm({...eventForm, name: value})}>
+                          <SelectTrigger className="pl-10">
+                            <SelectValue placeholder="Search and select event" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <div className="p-2">
+                              <Input
+                                placeholder="Search events..."
+                                value={eventSearchQuery}
+                                onChange={(e) => setEventSearchQuery(e.target.value)}
+                                className="mb-2"
+                              />
+                            </div>
+                            {eventTemplates
+                              .filter(event => 
+                                event.name.toLowerCase().includes(eventSearchQuery.toLowerCase())
+                              )
+                              .map((event) => (
+                                <SelectItem key={event.id} value={event.name}>
+                                  {event.name} ({event.category})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Category</Label>
                       <Select value={eventForm.category} onValueChange={(value) => setEventForm({...eventForm, category: value})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
@@ -258,12 +325,12 @@ const Admin: React.FC = () => {
                           <SelectItem value="Junior">Junior (1-5)</SelectItem>
                           <SelectItem value="Middle">Middle (6-8)</SelectItem>
                           <SelectItem value="Senior">Senior (9-12)</SelectItem>
+                          <SelectItem value="All">All Grades</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    
                     <div className="space-y-2">
-                      <Label htmlFor="type">Event Type</Label>
+                      <Label htmlFor="type">Type</Label>
                       <Select value={eventForm.type} onValueChange={(value) => setEventForm({...eventForm, type: value})}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
@@ -274,52 +341,52 @@ const Admin: React.FC = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="house">House</Label>
-                      <Select value={eventForm.house} onValueChange={(value) => setEventForm({...eventForm, house: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select house" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Tagore">Tagore</SelectItem>
-                          <SelectItem value="Delany">Delany</SelectItem>
-                          <SelectItem value="Gandhi">Gandhi</SelectItem>
-                          <SelectItem value="Nehru">Nehru</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="position">Position</Label>
-                      <Select value={eventForm.position} onValueChange={(value) => setEventForm({...eventForm, position: value})}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select position" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1">1st Place</SelectItem>
-                          <SelectItem value="2">2nd Place</SelectItem>
-                          <SelectItem value="3">3rd Place</SelectItem>
-                          <SelectItem value="4">4th Place</SelectItem>
-                          <SelectItem value="5">5th Place</SelectItem>
-                          <SelectItem value="6">6th Place</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    {eventForm.type && eventForm.position && (
-                      <div className="space-y-2">
-                        <Label>Points Earned</Label>
-                        <div className="text-2xl font-bold text-green-500">
-                          +{calculatePoints(parseInt(eventForm.position), eventForm.type as 'Individual' | 'Group')} pts
+                  </div>
+                  <div className="space-y-4">
+                    {multiWinners.map((winner, idx) => (
+                      <div key={idx} className="flex items-center gap-2 border rounded-lg p-3 relative bg-secondary/10">
+                        <button
+                          type="button"
+                          className="absolute top-2 right-2 text-muted-foreground hover:text-destructive"
+                          onClick={() => removeWinnerRow(idx)}
+                          title="Remove winner"
+                        >
+                          ×
+                        </button>
+                        <div className="flex-1">
+                          <Label>House</Label>
+                          <Input
+                            value={winner.house}
+                            onChange={e => updateWinnerRow(idx, 'house', e.target.value)}
+                            placeholder="Enter house name"
+                            required
+                          />
+                        </div>
+                        <div className="w-32">
+                          <Label>Position</Label>
+                          <Input
+                            type="number"
+                            value={winner.position}
+                            onChange={e => updateWinnerRow(idx, 'position', e.target.value)}
+                            min={1}
+                            required
+                          />
+                        </div>
+                        <div className="w-32 text-center">
+                          <Label>Points</Label>
+                          <div className="text-lg font-bold text-green-600 mt-1">
+                            +{calculatePoints(Number(winner.position), eventForm.type as 'Individual' | 'Group')} pts
+                          </div>
                         </div>
                       </div>
-                    )}
+                    ))}
+                    <Button type="button" variant="outline" onClick={addWinnerRow}>
+                      + Add Winner
+                    </Button>
                   </div>
-                  
                   <Button type="submit" className="w-full">
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Event Result
+                    Add Event Result(s)
                   </Button>
                 </form>
               </CardContent>
