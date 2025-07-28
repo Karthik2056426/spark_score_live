@@ -15,6 +15,8 @@ import AddWinnerPhotoForm from "@/components/AddWinnerPhotoForm";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
 import { useNavigate } from 'react-router-dom';
+import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 const Admin: React.FC = () => {
   const { events, eventTemplates, addEvent, calculatePoints } = useSparkData();
@@ -25,6 +27,9 @@ const Admin: React.FC = () => {
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginLoading, setLoginLoading] = useState(false);
   const navigate = useNavigate();
+  const [editEvent, setEditEvent] = useState<Event | null>(null);
+  const [editForm, setEditForm] = useState<any>(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   // Auth state listener
   useEffect(() => {
@@ -104,6 +109,39 @@ const Admin: React.FC = () => {
   };
 
   const recentEvents = events.slice(-5).reverse();
+
+  // Delete event
+  const handleDeleteEvent = async (eventId: string) => {
+    try {
+      await deleteDoc(doc(db, 'events', eventId));
+      toast({ title: 'Event deleted' });
+    } catch (err: any) {
+      toast({ title: 'Delete failed', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  // Open edit modal
+  const openEditModal = (event: Event) => {
+    setEditEvent(event);
+    setEditForm({ ...event });
+  };
+
+  // Handle edit form submit
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditLoading(true);
+    try {
+      const { id, ...updateData } = editForm;
+      await updateDoc(doc(db, 'events', editEvent!.id), updateData);
+      setEditEvent(null);
+      setEditForm(null);
+      toast({ title: 'Event updated' });
+    } catch (err: any) {
+      toast({ title: 'Update failed', description: err.message, variant: 'destructive' });
+    } finally {
+      setEditLoading(false);
+    }
+  };
 
   // Login Modal
   if (showLogin) {
@@ -332,7 +370,11 @@ const Admin: React.FC = () => {
                       <div className="font-medium text-sm">{event.name}</div>
                       <div className="text-xs text-muted-foreground">{event.house} • {event.category}</div>
                     </div>
-                    <Badge variant="outline">+{event.points}pts</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">+{event.points}pts</Badge>
+                      <Button size="sm" variant="outline" onClick={() => openEditModal(event)}>Edit</Button>
+                      <Button size="sm" variant="destructive" onClick={() => handleDeleteEvent(event.id)}>Delete</Button>
+                    </div>
                   </div>
                 ))}
                 
@@ -346,6 +388,84 @@ const Admin: React.FC = () => {
             </Card>
           </div>
         </div>
+        {/* Edit Event Modal */}
+        {editEvent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+            <Card className="w-full max-w-md mx-auto animate-fade-in">
+              <CardHeader>
+                <CardTitle>Edit Event</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleEditSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="editName">Event Name</Label>
+                    <Input
+                      id="editName"
+                      value={editForm.name}
+                      onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editCategory">Category</Label>
+                    <Input
+                      id="editCategory"
+                      value={editForm.category}
+                      onChange={e => setEditForm(f => ({ ...f, category: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editType">Type</Label>
+                    <Input
+                      id="editType"
+                      value={editForm.type}
+                      onChange={e => setEditForm(f => ({ ...f, type: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editHouse">House</Label>
+                    <Input
+                      id="editHouse"
+                      value={editForm.house}
+                      onChange={e => setEditForm(f => ({ ...f, house: e.target.value }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editPosition">Position</Label>
+                    <Input
+                      id="editPosition"
+                      type="number"
+                      value={editForm.position}
+                      onChange={e => setEditForm(f => ({ ...f, position: Number(e.target.value) }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="editPoints">Points</Label>
+                    <Input
+                      id="editPoints"
+                      type="number"
+                      value={editForm.points}
+                      onChange={e => setEditForm(f => ({ ...f, points: Number(e.target.value) }))}
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button type="button" variant="outline" onClick={() => setEditEvent(null)}>
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={editLoading}>
+                      {editLoading ? 'Saving...' : 'Save'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
