@@ -32,7 +32,7 @@ const AddEventTemplateForm: React.FC<AddEventTemplateFormProps> = ({ onEventCrea
     if (!eventForm.name || !eventForm.category || !eventForm.type) {
       toast({
         title: "Missing Fields",
-        description: "Please fill in all required fields.",
+        description: "Please fill in all required fields (Event Name, Category, Type).",
         variant: "destructive"
       });
       return;

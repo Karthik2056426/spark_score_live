@@ -36,6 +36,13 @@ const Admin: React.FC = () => {
   const [editLoading, setEditLoading] = useState(false);
   const lastCreatedEventNameRef = useRef<string | null>(null);
 
+  // 1. Show all events in the results dropdown (not just those without results)
+  const allEvents = events; // No filter
+
+  // 2. Add state for editing mode and selected event's winners
+  const [editingWinners, setEditingWinners] = useState<any[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+
   // Get events without results (templates)
   // Handle legacy events that might not have hasResults field
   const eventTemplates = events.filter(event => !event.hasResults && (!event.winners || event.winners.length === 0));
@@ -113,6 +120,11 @@ const Admin: React.FC = () => {
     console.log('Events without hasResults field:', events.filter(e => e.hasResults === undefined));
     console.log('=== END DEBUG ===');
   }, [events, eventTemplates, eventsWithResults]);
+
+  // Debug: Log all events from Firestore
+  useEffect(() => {
+    console.log('DEBUG: All events from Firestore:', events);
+  }, [events]);
 
   // Helper function to get display text for selected event
   const getSelectedEventDisplay = () => {
@@ -220,8 +232,7 @@ const Admin: React.FC = () => {
       });
       return;
     }
-    // Get the selected event details
-    const selectedEvent = eventTemplates.find(e => e.id === eventForm.selectedEventId);
+    const selectedEvent = allEvents.find(e => e.id === eventForm.selectedEventId);
     if (!selectedEvent) {
       toast({
         title: "Event Not Found",
@@ -240,7 +251,6 @@ const Admin: React.FC = () => {
       return;
     }
     try {
-      // Create winners array with calculated points
       const winnersWithPoints = validWinners.map(winner => ({
         house: winner.house,
         position: Number(winner.position),
@@ -249,13 +259,11 @@ const Admin: React.FC = () => {
         points: calculatePoints(Number(winner.position), eventForm.type as 'Individual' | 'Group'),
         image: winner.image || ''
       }));
-
-      // Add winners to the selected event
+      // 2. If editing, update winners; else, add winners
       await addWinnersToEvent(eventForm.selectedEventId, winnersWithPoints);
-
       toast({
-        title: "Event Results Added",
-        description: `${validWinners.length} winner(s) added for ${selectedEvent.name}`
+        title: isEditing ? "Results Updated" : "Event Results Added",
+        description: `${validWinners.length} winner(s) ${isEditing ? 'updated' : 'added'} for ${selectedEvent.name}`
       });
       setEventForm({ name: '', category: '', type: '', house: '', position: '', selectedEventId: '' });
       setMultiWinners([
@@ -263,6 +271,8 @@ const Admin: React.FC = () => {
         { house: '', position: 2, studentName: '', studentClass: '', image: '' },
         { house: '', position: 3, studentName: '', studentClass: '', image: '' },
       ]);
+      setIsEditing(false);
+      setEditingWinners([]);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     }
@@ -405,7 +415,8 @@ const Admin: React.FC = () => {
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Select value={eventForm.selectedEventId} onValueChange={(value) => {
-                          const selectedEvent = eventTemplates.find(e => e.id === value);
+                          console.log('DEBUG: Dropdown selected value:', value);
+                          const selectedEvent = allEvents.find(e => e.id === value);
                           if (selectedEvent) {
                             updateEventForm({
                               selectedEventId: value,
@@ -414,11 +425,29 @@ const Admin: React.FC = () => {
                               type: selectedEvent.type
                             });
                             selectedEventRef.current = value;
+                            // 2. If event has winners, pre-fill for editing
+                            if (selectedEvent.winners && selectedEvent.winners.length > 0) {
+                              setEditingWinners(selectedEvent.winners);
+                              setIsEditing(true);
+                              setMultiWinners(selectedEvent.winners.map(w => ({ ...w, image: w.image || '' })));
+                            } else {
+                              setEditingWinners([]);
+                              setIsEditing(false);
+                              setMultiWinners([
+                                { house: '', position: 1, studentName: '', studentClass: '', image: '' },
+                                { house: '', position: 2, studentName: '', studentClass: '', image: '' },
+                                { house: '', position: 3, studentName: '', studentClass: '', image: '' },
+                              ]);
+                            }
                           }
                         }}>
                           <SelectTrigger id="eventName" className="pl-10">
-                            <SelectValue placeholder={eventTemplates.length === 0 ? "No events available" : "Search and select event"}>
-                              {getSelectedEventDisplay()}
+                            <SelectValue placeholder={allEvents.length === 0 ? "No events available" : "Search and select event"}>
+                              {allEvents.length === 0 ? (
+                                <span className="text-muted-foreground">No events available. Please add an event first.</span>
+                              ) : (
+                                eventTemplates.length === 0 ? "Search and select event" : getSelectedEventDisplay()
+                              )}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
@@ -430,10 +459,8 @@ const Admin: React.FC = () => {
                                 className="mb-2"
                               />
                             </div>
-                            {eventTemplates
-                              .filter(event => 
-                                event.name.toLowerCase().includes(eventSearchQuery.toLowerCase())
-                              )
+                            {allEvents
+                              .filter(event => (event.name || '').toLowerCase().includes(eventSearchQuery.toLowerCase()))
                               .map((event) => {
                                 // Map category values to display names
                                 const getCategoryDisplay = (category: string) => {
@@ -451,12 +478,14 @@ const Admin: React.FC = () => {
                                   };
                                   return categoryMap[category] || category;
                                 };
-                                
-                                console.log('Rendering event option:', event.id, event.name);
+                                console.log('DEBUG: Dropdown option:', event);
                                 
                                 return (
                                   <SelectItem key={event.id} value={event.id}>
-                                    {event.name} ({getCategoryDisplay(event.category)})
+                                    {(event.name && event.name.trim()) ? event.name : '[No Name]'} ({getCategoryDisplay(event.category)})
+                                    {event.winners && event.winners.length > 0 && (
+                                      <span className="ml-2 text-xs text-green-600">(Results exist)</span>
+                                    )}
                                   </SelectItem>
                                 );
                               })}
@@ -465,7 +494,7 @@ const Admin: React.FC = () => {
                         {/* Debug display */}
                         <div className="mt-2 text-xs text-muted-foreground">
                           Debug: Selected ID: {eventForm.selectedEventId || 'None'} | 
-                          Name: {eventTemplates.find(e => e.id === eventForm.selectedEventId)?.name || 'None'}
+                          Name: {allEvents.find(e => e.id === eventForm.selectedEventId)?.name || 'None'}
                         </div>
                       </div>
                     </div>
@@ -580,8 +609,7 @@ const Admin: React.FC = () => {
                     </Button>
                   </div>
                   <Button type="submit" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Event Result(s)
+                    {isEditing ? 'Save Results' : 'Add Results'}
                   </Button>
                 </form>
               </CardContent>
