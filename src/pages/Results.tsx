@@ -128,6 +128,17 @@ const Results: React.FC = () => {
                         <span>{event.category} • {event.type}</span>
                       </div>
                     </div>
+                    {/* Student Details */}
+                    {(event as any).studentName && (event as any).studentClass && (
+                      <div className="mt-3 p-3 bg-muted/50 rounded-lg">
+                        <div className="text-sm font-medium text-foreground mb-1">Winner Details:</div>
+                        <div className="text-sm text-muted-foreground">
+                          <span className="font-medium">{(event as any).studentName}</span>
+                          <span className="mx-2">•</span>
+                          <span>Class {(event as any).studentClass}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">

@@ -72,14 +72,14 @@ const Admin: React.FC = () => {
 
   // Multi-winner event result form state
   const [multiWinners, setMultiWinners] = useState([
-    { house: '', position: 1 },
-    { house: '', position: 2 },
-    { house: '', position: 3 },
+    { house: '', position: 1, studentName: '', studentClass: '' },
+    { house: '', position: 2, studentName: '', studentClass: '' },
+    { house: '', position: 3, studentName: '', studentClass: '' },
   ]);
 
   // Add a new winner row
   const addWinnerRow = () => {
-    setMultiWinners(prev => [...prev, { house: '', position: prev.length + 1 }]);
+    setMultiWinners(prev => [...prev, { house: '', position: prev.length + 1, studentName: '', studentClass: '' }]);
   };
 
   // Remove a winner row by index
@@ -141,11 +141,11 @@ const Admin: React.FC = () => {
       });
       return;
     }
-    const validWinners = multiWinners.filter(w => w.house && w.position);
+    const validWinners = multiWinners.filter(w => w.house && w.position && w.studentName && w.studentClass);
     if (validWinners.length === 0) {
       toast({
         title: "No Winners",
-        description: "Please add at least one winner.",
+        description: "Please add at least one winner (with all details).",
         variant: "destructive"
       });
       return;
@@ -158,8 +158,10 @@ const Admin: React.FC = () => {
           type: eventForm.type as 'Individual' | 'Group',
           house: winner.house,
           position: Number(winner.position),
-          date: new Date().toISOString().split('T')[0]
-        });
+          date: new Date().toISOString().split('T')[0],
+          studentName: winner.studentName,
+          studentClass: winner.studentClass,
+        } as any);
       }
       toast({
         title: "Event Results Added",
@@ -167,9 +169,9 @@ const Admin: React.FC = () => {
       });
       setEventForm({ name: '', category: '', type: '', house: '', position: '' });
       setMultiWinners([
-        { house: '', position: 1 },
-        { house: '', position: 2 },
-        { house: '', position: 3 },
+        { house: '', position: 1, studentName: '', studentClass: '' },
+        { house: '', position: 2, studentName: '', studentClass: '' },
+        { house: '', position: 3, studentName: '', studentClass: '' },
       ]);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
@@ -366,6 +368,24 @@ const Admin: React.FC = () => {
                               <SelectItem value="Delany">Delany</SelectItem>
                             </SelectContent>
                           </Select>
+                        </div>
+                        <div className="w-40">
+                          <Label>Student Name</Label>
+                          <Input
+                            value={winner.studentName}
+                            onChange={e => updateWinnerRow(idx, 'studentName', e.target.value)}
+                            placeholder="Enter name"
+                            required
+                          />
+                        </div>
+                        <div className="w-32">
+                          <Label>Class</Label>
+                          <Input
+                            value={winner.studentClass}
+                            onChange={e => updateWinnerRow(idx, 'studentClass', e.target.value)}
+                            placeholder="e.g. 5A"
+                            required
+                          />
                         </div>
                         <div className="w-32">
                           <Label>Position</Label>
