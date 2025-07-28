@@ -92,6 +92,7 @@ const Admin: React.FC = () => {
 
   // Prevent form from being reset unnecessarily
   const updateEventForm = useCallback((updates: Partial<typeof eventForm>) => {
+    console.log('DEBUG: updateEventForm called with:', updates);
     setEventForm(prev => {
       const newForm = { ...prev, ...updates };
       console.log('Updating eventForm from:', prev, 'to:', newForm);
@@ -129,7 +130,7 @@ const Admin: React.FC = () => {
   // Helper function to get display text for selected event
   const getSelectedEventDisplay = () => {
     const selectedEventId = eventForm.selectedEventId;
-    const selectedEvent = eventTemplates.find(e => e.id === selectedEventId);
+    const selectedEvent = allEvents.find(e => e.id === selectedEventId);
     if (!selectedEvent) return "Search and select event";
     const getCategoryDisplay = (category: string) => {
       const categoryMap: Record<string, string> = {
@@ -199,10 +200,7 @@ const Admin: React.FC = () => {
     addEvent({
       name: eventForm.name,
       category: eventForm.category as 'Junior' | 'Middle' | 'Senior',
-      type: eventForm.type as 'Individual' | 'Group',
-      house: eventForm.house,
-      position: parseInt(eventForm.position),
-      date: new Date().toISOString().split('T')[0]
+      type: eventForm.type as 'Individual' | 'Group'
     });
 
     toast({
@@ -302,7 +300,9 @@ const Admin: React.FC = () => {
     setEditLoading(true);
     try {
       const { id, ...updateData } = editForm;
-      await updateDoc(doc(db, 'events', editEvent!.id), updateData);
+      if (editEvent && (editEvent as any).id) {
+        await updateDoc(doc(db, 'events', (editEvent as any).id), updateData);
+      }
       setEditEvent(null);
       setEditForm(null);
       toast({ title: 'Event template updated' });
@@ -313,7 +313,26 @@ const Admin: React.FC = () => {
     }
   };
 
-  // Login Modal
+  // Only auto-select after event creation
+  useEffect(() => {
+    if (lastCreatedEventNameRef.current && eventTemplates.length > 0) {
+      const found = eventTemplates.find(e => e.name === lastCreatedEventNameRef.current);
+      if (found) {
+        updateEventForm({
+          selectedEventId: found.id,
+          name: found.name,
+          category: found.category,
+          type: found.type
+        });
+        selectedEventRef.current = found.id;
+        lastCreatedEventNameRef.current = null; // Reset after selection
+      }
+    }
+    // Only run when eventTemplates changes
+    // eslint-disable-next-line
+  }, [eventTemplates]);
+
+  // Place conditional return for login after all hooks
   if (showLogin) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -357,25 +376,6 @@ const Admin: React.FC = () => {
     lastCreatedEventNameRef.current = eventName;
   };
 
-  // Only auto-select after event creation
-  useEffect(() => {
-    if (lastCreatedEventNameRef.current && eventTemplates.length > 0) {
-      const found = eventTemplates.find(e => e.name === lastCreatedEventNameRef.current);
-      if (found) {
-        updateEventForm({
-          selectedEventId: found.id,
-          name: found.name,
-          category: found.category,
-          type: found.type
-        });
-        selectedEventRef.current = found.id;
-        lastCreatedEventNameRef.current = null; // Reset after selection
-      }
-    }
-    // Only run when eventTemplates changes
-    // eslint-disable-next-line
-  }, [eventTemplates]);
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -415,14 +415,24 @@ const Admin: React.FC = () => {
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Select value={eventForm.selectedEventId} onValueChange={(value) => {
-                          console.log('DEBUG: Dropdown selected value:', value);
+                          console.log('DEBUG: onValueChange called with value:', value);
                           const selectedEvent = allEvents.find(e => e.id === value);
                           if (selectedEvent) {
+                            // Normalize category
+                            let normalizedCategory = selectedEvent.category;
+                            if (["1", "2", "3", "4", "5", "6"].includes(selectedEvent.category)) {
+                              normalizedCategory = "Junior";
+                            }
+                            // Normalize type
+                            let normalizedType = selectedEvent.type;
+                            if (normalizedType !== "Individual" && normalizedType !== "Group") {
+                              normalizedType = "Individual";
+                            }
                             updateEventForm({
                               selectedEventId: value,
                               name: selectedEvent.name,
-                              category: selectedEvent.category,
-                              type: selectedEvent.type
+                              category: normalizedCategory,
+                              type: normalizedType
                             });
                             selectedEventRef.current = value;
                             // 2. If event has winners, pre-fill for editing
@@ -462,6 +472,7 @@ const Admin: React.FC = () => {
                             {allEvents
                               .filter(event => (event.name || '').toLowerCase().includes(eventSearchQuery.toLowerCase()))
                               .map((event) => {
+                                console.log('DEBUG: Dropdown option:', event, 'ID:', event.id, 'Name:', event.name, 'Type of ID:', typeof event.id);
                                 // Map category values to display names
                                 const getCategoryDisplay = (category: string) => {
                                   const categoryMap: Record<string, string> = {
@@ -478,10 +489,9 @@ const Admin: React.FC = () => {
                                   };
                                   return categoryMap[category] || category;
                                 };
-                                console.log('DEBUG: Dropdown option:', event);
                                 
                                 return (
-                                  <SelectItem key={event.id} value={event.id}>
+                                  <SelectItem key={String(event.id)} value={String(event.id)}>
                                     {(event.name && event.name.trim()) ? event.name : '[No Name]'} ({getCategoryDisplay(event.category)})
                                     {event.winners && event.winners.length > 0 && (
                                       <span className="ml-2 text-xs text-green-600">(Results exist)</span>

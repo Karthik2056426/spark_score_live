@@ -34,6 +34,9 @@ export interface Event {
   venue?: string;
   winners?: Winner[];
   hasResults?: boolean;
+  position?: number;
+  house?: string;
+  date?: string;
 }
 
 // Define houses in frontend
