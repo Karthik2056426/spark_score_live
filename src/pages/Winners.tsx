@@ -1,19 +1,29 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal } from "lucide-react";
 import { useSparkData } from "@/hooks/useSparkData";
 import Header from "@/components/Header";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselPrevious,
+  CarouselNext,
+} from "@/components/ui/carousel";
 
 const Winners = () => {
-  const { events, houses, winners } = useSparkData();
+  const { events } = useSparkData();
+  const [emblaApi, setEmblaApi] = useState<any>(null);
 
-  // Map event results to winner cards
-  // If a winner photo exists in the winners collection for this event+house+position, use it
-  const getWinnerImage = (eventName, house, position) => {
-    const match = winners.find(w => w.event === eventName && w.house === house && w.position === position);
-    return match?.image || null;
-  };
+  // Auto-advance carousel every 5 seconds
+  useEffect(() => {
+    if (!emblaApi) return;
+    const interval = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [emblaApi]);
 
   const getPositionIcon = (position: number) => {
     switch (position) {
@@ -33,6 +43,37 @@ const Winners = () => {
     }
   };
 
+  // Group winners by event name (only events with results)
+  const eventsWithResults = events.filter(event => event.hasResults && event.winners);
+  const eventWinnersMap = eventsWithResults.reduce((acc, event) => {
+    if (!acc[event.name]) acc[event.name] = [];
+    // Add event info to each winner
+    event.winners!.forEach(winner => {
+      acc[event.name].push({
+        ...winner,
+        eventName: event.name,
+        eventCategory: event.category,
+        eventType: event.type
+      });
+    });
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  // Sort winners by position within each event
+  Object.keys(eventWinnersMap).forEach(eventName => {
+    eventWinnersMap[eventName].sort((a, b) => a.position - b.position);
+  });
+
+  const getHouseColor = (houseName: string) => {
+    switch (houseName?.toLowerCase()) {
+      case 'tagore': return 'bg-tagore text-white';
+      case 'delany': return 'bg-delany text-white';
+      case 'gandhi': return 'bg-gandhi text-white';
+      case 'nehru': return 'bg-nehru text-white';
+      default: return 'bg-secondary text-foreground';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -41,42 +82,39 @@ const Winners = () => {
           <h1 className="text-4xl font-bold text-foreground mb-4">All Winners</h1>
           <p className="text-muted-foreground">Celebrating our SPARK champions</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event, index) => (
-            <Card key={event.id} className="hover:shadow-lg transition-all duration-300 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-              <CardContent className="p-6">
-                {/* Winner Photo Placeholder or actual image if available */}
-                <div className="w-24 h-24 mx-auto mb-4 bg-secondary/20 rounded-full flex items-center justify-center">
-                  {getWinnerImage(event.name, event.house, event.position) ? (
-                    <img 
-                      src={getWinnerImage(event.name, event.house, event.position)} 
-                      alt={event.name}
-                      className="w-full h-full rounded-full object-cover"
-                    />
-                  ) : (
-                    <Trophy className="h-12 w-12 text-muted-foreground" />
-                  )}
+        <Carousel className="w-full" opts={{ loop: true }} setApi={setEmblaApi}>
+          <CarouselContent>
+            {Object.entries(eventWinnersMap).map(([eventName, winnersArr], idx) => (
+              <CarouselItem key={eventName} className="px-2">
+                <div className="mb-6 text-center">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">{eventName}</h2>
                 </div>
-                {/* Winner Details */}
-                <div className="text-center space-y-3">
-                  <div className="text-4xl">{getPositionIcon(event.position)}</div>
-                  <h3 className="text-xl font-bold text-foreground">{event.name}</h3>
-                  <p className="text-muted-foreground font-medium">{event.house}</p>
-                  <Badge 
-                    variant="outline" 
-                    className={`border-${houses.find(h => h.name === event.house)?.color} text-${houses.find(h => h.name === event.house)?.color}-foreground bg-${houses.find(h => h.name === event.house)?.color}/10`}
-                  >
-                    {event.house} House
-                  </Badge>
-                  <div className="flex items-center justify-center space-x-2 text-sm text-muted-foreground">
-                    <Medal className="h-4 w-4" />
-                    <span>{getPositionText(event.position)}</span>
-                  </div>
+                <div className={`flex flex-wrap justify-center gap-6`}>
+                  {winnersArr.map((winner, i) => (
+                    <Card key={`${eventName}-${winner.house}-${winner.position}`} className="flex-1 min-w-[220px] max-w-xs mx-2">
+                      <CardContent className="flex flex-col items-center p-6">
+                        {/* Position */}
+                        <div className="text-4xl font-bold mb-2">{getPositionIcon(winner.position)}</div>
+                        {/* House pill */}
+                        <div className={`rounded-full px-4 py-1 mb-3 font-semibold text-sm ${getHouseColor(winner.house)}`}>{winner.house}</div>
+                        {/* Winner photo: use uploaded image if available */}
+                        <div className="w-24 h-24 mb-3 rounded-full bg-secondary/30 flex items-center justify-center overflow-hidden">
+                          <img src={winner.image ? winner.image : "/public/placeholder.svg"} alt="Winner" className="w-full h-full object-cover" />
+                        </div>
+                        {/* Student name */}
+                        <div className="text-lg font-medium text-foreground mb-1">{winner.studentName || 'Student Name'}</div>
+                        {/* Points earned */}
+                        <div className="text-base text-muted-foreground">+{winner.points || 0} pts</div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          <CarouselPrevious />
+          <CarouselNext />
+        </Carousel>
       </div>
     </div>
   );

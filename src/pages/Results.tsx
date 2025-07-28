@@ -12,9 +12,20 @@ const Results: React.FC = () => {
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
 
-  const filteredEvents = events.filter(event => {
-    const categoryMatch = filterCategory === 'all' || event.category === filterCategory;
-    const typeMatch = filterType === 'all' || event.type === filterType;
+  // Get events with results and flatten winners
+  const eventsWithResults = events.filter(event => event.hasResults && event.winners);
+  const allWinners = eventsWithResults.flatMap(event => 
+    event.winners!.map(winner => ({
+      ...winner,
+      eventName: event.name,
+      eventCategory: event.category,
+      eventType: event.type
+    }))
+  );
+
+  const filteredWinners = allWinners.filter(winner => {
+    const categoryMatch = filterCategory === 'all' || winner.eventCategory === filterCategory;
+    const typeMatch = filterType === 'all' || winner.eventType === filterType;
     return categoryMatch && typeMatch;
   });
 
@@ -99,9 +110,9 @@ const Results: React.FC = () => {
         </Card>
         {/* Results Grid */}
         <div className="grid gap-4">
-          {filteredEvents.map((event, index) => (
+          {filteredWinners.map((winner, index) => (
             <Card 
-              key={event.id} 
+              key={`${winner.eventName}-${winner.house}-${winner.position}`} 
               className="hover:shadow-lg transition-all duration-300 animate-slide-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
@@ -110,32 +121,28 @@ const Results: React.FC = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
                       <Trophy className="h-5 w-5 text-yellow-500" />
-                      <h3 className="text-xl font-semibold text-foreground">{event.name}</h3>
-                      <Badge className={getPositionBadge(event.position)}>
-                        {event.position === 1 ? '🥇 1st' : 
-                         event.position === 2 ? '🥈 2nd' : 
-                         event.position === 3 ? '🥉 3rd' : 
-                         `#${event.position}`}
+                      <h3 className="text-xl font-semibold text-foreground">{winner.eventName}</h3>
+                      <Badge className={getPositionBadge(winner.position)}>
+                        {winner.position === 1 ? '🥇 1st' : 
+                         winner.position === 2 ? '🥈 2nd' : 
+                         winner.position === 3 ? '🥉 3rd' : 
+                         `#${winner.position}`}
                       </Badge>
                     </div>
                     <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                       <div className="flex items-center space-x-1">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(event.date).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
                         <Users className="h-4 w-4" />
-                        <span>{event.category} • {event.type}</span>
+                        <span>{winner.eventCategory} • {winner.eventType}</span>
                       </div>
                     </div>
                     {/* Student Details */}
-                    {(event as any).studentName && (event as any).studentClass && (
+                    {winner.studentName && winner.studentClass && (
                       <div className="mt-3 p-3 bg-muted/50 rounded-lg">
                         <div className="text-sm font-medium text-foreground mb-1">Winner Details:</div>
                         <div className="text-sm text-muted-foreground">
-                          <span className="font-medium">{(event as any).studentName}</span>
+                          <span className="font-medium">{winner.studentName}</span>
                           <span className="mx-2">•</span>
-                          <span>Class {(event as any).studentClass}</span>
+                          <span>Class {winner.studentClass}</span>
                         </div>
                       </div>
                     )}
@@ -144,12 +151,12 @@ const Results: React.FC = () => {
                     <div className="text-right">
                       <Badge 
                         variant="outline" 
-                        className={`border-${getHouseColor(event.house)} text-${getHouseColor(event.house)}-foreground bg-${getHouseColor(event.house)}/10`}
+                        className={`border-${getHouseColor(winner.house)} text-${getHouseColor(winner.house)}-foreground bg-${getHouseColor(winner.house)}/10`}
                       >
-                        {event.house}
+                        {winner.house}
                       </Badge>
                       <div className="text-lg font-bold text-foreground mt-1">
-                        +{event.points} pts
+                        +{winner.points} pts
                       </div>
                     </div>
                   </div>
@@ -158,7 +165,7 @@ const Results: React.FC = () => {
             </Card>
           ))}
         </div>
-        {filteredEvents.length === 0 && (
+        {filteredWinners.length === 0 && (
           <Card className="text-center py-12">
             <CardContent>
               <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

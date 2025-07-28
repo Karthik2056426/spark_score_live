@@ -9,7 +9,11 @@ import { Plus } from "lucide-react";
 import { useSparkData } from "@/hooks/useSparkData";
 import { useToast } from "@/hooks/use-toast";
 
-const AddEventTemplateForm: React.FC = () => {
+interface AddEventTemplateFormProps {
+  onEventCreated?: (eventName: string) => void;
+}
+
+const AddEventTemplateForm: React.FC<AddEventTemplateFormProps> = ({ onEventCreated }) => {
   const { addEventTemplate } = useSparkData();
   const { toast } = useToast();
   
@@ -22,7 +26,7 @@ const AddEventTemplateForm: React.FC = () => {
     venue: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!eventForm.name || !eventForm.category || !eventForm.type) {
@@ -44,8 +48,9 @@ const AddEventTemplateForm: React.FC = () => {
     if (eventForm.time) template.time = eventForm.time;
     if (eventForm.venue) template.venue = eventForm.venue;
 
-    addEventTemplate(template);
-
+    console.log('Creating event template:', template);
+    await addEventTemplate(template);
+    if (onEventCreated) onEventCreated(eventForm.name);
     toast({
       title: "Event Created Successfully",
       description: `${eventForm.name} has been added to the event list!`

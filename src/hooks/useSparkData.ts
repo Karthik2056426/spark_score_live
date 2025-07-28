@@ -15,35 +15,25 @@ export interface House {
   color: 'tagore' | 'delany' | 'gandhi' | 'nehru';
 }
 
-export interface Event {
-  id: string;
-  name: string;
-  category: 'Junior' | 'Middle' | 'Senior';
-  type: 'Individual' | 'Group';
+export interface Winner {
   house: string;
   position: number;
+  studentName: string;
+  studentClass: string;
   points: number;
-  date: string;
+  image?: string;
 }
 
-export interface EventTemplate {
+export interface Event {
   id: string;
   name: string;
   category: string;
   type: 'Individual' | 'Group';
   description?: string;
-  date?: string;
   time?: string;
   venue?: string;
-}
-
-export interface Winner {
-  id: string;
-  name: string;
-  event: string;
-  house: string;
-  position: number;
-  image?: string;
+  winners?: Winner[];
+  hasResults?: boolean;
 }
 
 // Define houses in frontend
@@ -56,32 +46,25 @@ const HOUSE_LIST: Omit<House, 'score' | 'rank'>[] = [
 
 export const useSparkData = () => {
   const [events, setEvents] = useState<Event[]>([]);
-  const [winners, setWinners] = useState<Winner[]>([]);
-  const [eventTemplates, setEventTemplates] = useState<EventTemplate[]>([]);
+  const [winners, setWinners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch and listen to Firestore collections (events, eventTemplates, winners)
+  // Fetch and listen to Firestore collections (events only)
   useEffect(() => {
     setLoading(true);
-    // Events
+    // Events (unified)
     const unsubEvents = onSnapshot(collection(db, 'events'), (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Event[];
       setEvents(data);
     });
-    // Event Templates
-    const unsubEventTemplates = onSnapshot(collection(db, 'eventTemplates'), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as EventTemplate[];
-      setEventTemplates(data);
-    });
-    // Winners
+    // Winners (legacy - can be removed later)
     const unsubWinners = onSnapshot(collection(db, 'winners'), (snapshot) => {
-      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Winner[];
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setWinners(data);
     });
     setLoading(false);
     return () => {
       unsubEvents();
-      unsubEventTemplates();
       unsubWinners();
     };
   }, []);
@@ -98,45 +81,74 @@ export const useSparkData = () => {
   };
 
   // Add new event (for admin)
-  const addEvent = useCallback(async (newEvent: Omit<Event, 'id' | 'points'>) => {
-    const points = calculatePoints(newEvent.position, newEvent.type);
-    const event = {
-      ...newEvent,
-      points,
-      date: newEvent.date || new Date().toISOString().split('T')[0],
-    };
-    await addDoc(collection(db, 'events'), event);
+  const addEvent = useCallback(async (eventData: Omit<Event, 'id'>) => {
+    try {
+      await addDoc(collection(db, 'events'), eventData);
+    } catch (error) {
+      console.error('Error adding event:', error);
+      throw error;
+    }
   }, []);
 
-  // Add new event template
-  const addEventTemplate = useCallback(async (newEventTemplate: Omit<EventTemplate, 'id'>) => {
-    await addDoc(collection(db, 'eventTemplates'), newEventTemplate);
+  // Add event template (creates event without winners)
+  const addEventTemplate = useCallback(async (templateData: any) => {
+    try {
+      const eventData = {
+        ...templateData,
+        winners: [],
+        hasResults: false
+      };
+      await addDoc(collection(db, 'events'), eventData);
+    } catch (error) {
+      console.error('Error adding event template:', error);
+      throw error;
+    }
   }, []);
 
-  // Add winner photo
+  // Add winners to existing event
+  const addWinnersToEvent = useCallback(async (eventId: string, winners: Winner[]) => {
+    try {
+      const eventRef = doc(db, 'events', eventId);
+      await updateDoc(eventRef, {
+        winners: winners,
+        hasResults: true
+      });
+    } catch (error) {
+      console.error('Error adding winners to event:', error);
+      throw error;
+    }
+  }, []);
+
+  // Add winner photo (legacy function - can be updated later)
   const addWinnerPhoto = useCallback(async (winnerId: string, imageUrl: string) => {
-    await updateDoc(doc(db, 'winners', winnerId), { image: imageUrl });
+    try {
+      await updateDoc(doc(db, 'winners', winnerId), { image: imageUrl });
+    } catch (error) {
+      console.error('Error adding winner photo:', error);
+      throw error;
+    }
   }, []);
 
-  // Calculate house scores and ranks from events
+  // Calculate houses scores and ranks from events with results
   const houses: House[] = HOUSE_LIST.map(house => {
     const score = events
-      .filter(event => event.house === house.name)
-      .reduce((sum, event) => sum + (event.points || 0), 0);
+      .filter(event => event.hasResults && event.winners)
+      .flatMap(event => event.winners || [])
+      .filter(winner => winner.house === house.name)
+      .reduce((sum, winner) => sum + (winner.points || 0), 0);
     return { ...house, score, rank: 0 };
   });
-  // Sort and assign ranks
   houses.sort((a, b) => b.score - a.score);
   houses.forEach((house, idx) => (house.rank = idx + 1));
 
   return {
-    houses,
     events,
     winners,
-    eventTemplates,
+    houses,
     loading,
     addEvent,
     addEventTemplate,
+    addWinnersToEvent,
     addWinnerPhoto,
     calculatePoints,
   };

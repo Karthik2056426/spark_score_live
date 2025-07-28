@@ -35,15 +35,31 @@ const Events = () => {
                     {event.type}
                   </Badge>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Date: {new Date(event.date).toLocaleDateString()}
-                </div>
-                <div className="text-sm">
-                  Points: <span className="font-semibold text-primary">{event.points}</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  House: {event.house}
-                </div>
+                {event.description && (
+                  <div className="text-sm text-muted-foreground">
+                    {event.description}
+                  </div>
+                )}
+                {event.time && (
+                  <div className="text-sm text-muted-foreground">
+                    Time: {event.time}
+                  </div>
+                )}
+                {event.venue && (
+                  <div className="text-sm text-muted-foreground">
+                    Venue: {event.venue}
+                  </div>
+                )}
+                {event.hasResults && event.winners && (
+                  <div className="text-sm text-green-600 font-medium">
+                    ✓ Results Available ({event.winners.length} winners)
+                  </div>
+                )}
+                {!event.hasResults && (
+                  <div className="text-sm text-muted-foreground">
+                    No results yet
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
