@@ -355,12 +355,17 @@ const Admin: React.FC = () => {
                         </button>
                         <div className="flex-1">
                           <Label>House</Label>
-                          <Input
-                            value={winner.house}
-                            onChange={e => updateWinnerRow(idx, 'house', e.target.value)}
-                            placeholder="Enter house name"
-                            required
-                          />
+                          <Select value={winner.house} onValueChange={value => updateWinnerRow(idx, 'house', value)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select house" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Tagore">Tagore</SelectItem>
+                              <SelectItem value="Gandhi">Gandhi</SelectItem>
+                              <SelectItem value="Nehru">Nehru</SelectItem>
+                              <SelectItem value="Delany">Delany</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                         <div className="w-32">
                           <Label>Position</Label>
