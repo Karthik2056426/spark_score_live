@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,51 @@ import { useState as useReactState } from "react";
 import Header from "@/components/Header";
 import AddEventTemplateForm from "@/components/AddEventTemplateForm";
 import AddWinnerPhotoForm from "@/components/AddWinnerPhotoForm";
+import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
+import { useNavigate } from 'react-router-dom';
 
 const Admin: React.FC = () => {
   const { events, eventTemplates, addEvent, calculatePoints } = useSparkData();
   const { toast } = useToast();
   const [eventSearchQuery, setEventSearchQuery] = useReactState('');
-  
+  const [user, setUser] = useState(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
+  const [loginLoading, setLoginLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // Auth state listener
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setShowLogin(!user);
+    });
+    return () => unsub();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
+      setShowLogin(false);
+      toast({ title: "Login Successful" });
+    } catch (err: any) {
+      toast({ title: "Login Failed", description: err.message, variant: "destructive" });
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    setUser(null);
+    setShowLogin(true);
+    toast({ title: "Logged out" });
+    navigate('/');
+  };
+
   const [eventForm, setEventForm] = useState({
     name: '',
     category: '',
@@ -66,11 +105,58 @@ const Admin: React.FC = () => {
 
   const recentEvents = events.slice(-5).reverse();
 
+  // Login Modal
+  if (showLogin) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <Card className="w-full max-w-sm mx-auto animate-fade-in">
+          <CardHeader>
+            <CardTitle>Admin Login</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={loginForm.email}
+                  onChange={e => setLoginForm(f => ({ ...f, email: e.target.value }))}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={loginForm.password}
+                  onChange={e => setLoginForm(f => ({ ...f, password: e.target.value }))}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loginLoading}>
+                {loginLoading ? 'Logging in...' : 'Login'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex justify-end mb-4">
+          {user && (
+            <Button variant="outline" onClick={handleLogout}>
+              Logout
+            </Button>
+          )}
+        </div>
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
