@@ -134,8 +134,15 @@ const Admin: React.FC = () => {
     if (!selectedEvent) return "Search and select event";
     const getCategoryDisplay = (category: string) => {
       const categoryMap: Record<string, string> = {
+        'Cat1': 'Cat 1 (LKG- UKG)', 
+        'Cat2': 'Cat 2 (class 1-2)', 
+        'Cat3': 'Cat 3 (class 3-5)', 
+        'Cat4': 'Cat 4 (class 6-8)', 
+        'Cat5': 'Cat 5 (class 9-12)', 
+        'All': 'All Categories',
+        // Legacy mappings for existing data
         '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6',
-        'Junior': 'Junior (1-5)', 'Middle': 'Middle (6-8)', 'Senior': 'Senior (9-12)', 'All': 'All Grades'
+        'Junior': 'Junior (1-5)', 'Middle': 'Middle (6-8)', 'Senior': 'Senior (9-12)'
       };
       return categoryMap[category] || category;
     };
@@ -476,6 +483,13 @@ const Admin: React.FC = () => {
                                 // Map category values to display names
                                 const getCategoryDisplay = (category: string) => {
                                   const categoryMap: Record<string, string> = {
+                                    'Cat1': 'Cat 1 (LKG- UKG)', 
+                                    'Cat2': 'Cat 2 (class 1-2)', 
+                                    'Cat3': 'Cat 3 (class 3-5)', 
+                                    'Cat4': 'Cat 4 (class 6-8)', 
+                                    'Cat5': 'Cat 5 (class 9-12)', 
+                                    'All': 'All Categories',
+                                    // Legacy mappings for existing data
                                     '1': 'Grade 1',
                                     '2': 'Grade 2', 
                                     '3': 'Grade 3',
@@ -484,8 +498,7 @@ const Admin: React.FC = () => {
                                     '6': 'Grade 6',
                                     'Junior': 'Junior (1-5)',
                                     'Middle': 'Middle (6-8)',
-                                    'Senior': 'Senior (9-12)',
-                                    'All': 'All Grades'
+                                    'Senior': 'Senior (9-12)'
                                   };
                                   return categoryMap[category] || category;
                                 };
@@ -515,10 +528,12 @@ const Admin: React.FC = () => {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Junior">Junior (1-5)</SelectItem>
-                          <SelectItem value="Middle">Middle (6-8)</SelectItem>
-                          <SelectItem value="Senior">Senior (9-12)</SelectItem>
-                          <SelectItem value="All">All Grades</SelectItem>
+                          <SelectItem value="Cat1">Cat 1 (LKG- UKG)</SelectItem>
+                          <SelectItem value="Cat2">Cat 2 (class 1-2)</SelectItem>
+                          <SelectItem value="Cat3">Cat 3 (class 3-5)</SelectItem>
+                          <SelectItem value="Cat4">Cat 4 (class 6-8)</SelectItem>
+                          <SelectItem value="Cat5">Cat 5 (class 9-12)</SelectItem>
+                          <SelectItem value="All">All Categories</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

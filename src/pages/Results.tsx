@@ -75,9 +75,11 @@ const Results: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    <SelectItem value="Junior">Junior (1-5)</SelectItem>
-                    <SelectItem value="Middle">Middle (6-8)</SelectItem>
-                    <SelectItem value="Senior">Senior (9-12)</SelectItem>
+                    <SelectItem value="Cat1">Cat 1 (LKG- UKG)</SelectItem>
+                    <SelectItem value="Cat2">Cat 2 (class 1-2)</SelectItem>
+                    <SelectItem value="Cat3">Cat 3 (class 3-5)</SelectItem>
+                    <SelectItem value="Cat4">Cat 4 (class 6-8)</SelectItem>
+                    <SelectItem value="Cat5">Cat 5 (class 9-12)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

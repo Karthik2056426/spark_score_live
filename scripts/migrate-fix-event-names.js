@@ -1,27 +1,40 @@
 // Usage: node scripts/migrate-fix-event-names.js
 // This script updates all events in Firestore that are missing a name or have an empty name.
 
-const { initializeApp, applicationDefault } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
+import { initializeApp } from 'firebase/app';
+import { getFirestore, collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 
-initializeApp({
-  credential: applicationDefault(),
-});
+// TODO: Replace with your actual Firebase config
+const firebaseConfig = {
+  apiKey: 'YOUR_API_KEY',
+  authDomain: 'spa-scores-spark.firebaseapp.com',
+  projectId: 'spa-scores-spark',
+  storageBucket: 'spa-scores-spark.appspot.com',
+  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: '1:1016059668517:web:0f21514aa60238ed43b7cc'
+};
 
-const db = getFirestore();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 async function fixEventNames() {
-  const eventsRef = db.collection('events');
-  const snapshot = await eventsRef.get();
+  console.log('Starting migration...');
+  
+  const eventsRef = collection(db, 'events');
+  const snapshot = await getDocs(eventsRef);
   let updated = 0;
-  for (const doc of snapshot.docs) {
-    const data = doc.data();
+  
+  for (const docSnapshot of snapshot.docs) {
+    const data = docSnapshot.data();
     if (!data.name || typeof data.name !== 'string' || data.name.trim() === '') {
-      await doc.ref.update({ name: '[No Name]' });
-      console.log(`Updated event ${doc.id} to have name '[No Name]'`);
+      await updateDoc(doc(db, 'events', docSnapshot.id), { name: '[No Name]' });
+      console.log(`Updated event ${docSnapshot.id} to have name '[No Name]'`);
       updated++;
+    } else {
+      console.log(`Event ${docSnapshot.id} already has name: "${data.name}"`);
     }
   }
+  
   console.log(`Migration complete. Updated ${updated} events.`);
 }
 
