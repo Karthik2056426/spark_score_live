@@ -25,9 +25,16 @@ const AddEventTemplateForm: React.FC<AddEventTemplateFormProps> = ({ onEventCrea
     time: '',
     venue: ''
   });
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmitting) {
+      return;
+    }
     
     if (!eventForm.name || !eventForm.category || !eventForm.type) {
       toast({
@@ -37,34 +44,46 @@ const AddEventTemplateForm: React.FC<AddEventTemplateFormProps> = ({ onEventCrea
       });
       return;
     }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Only include optional fields if they have a value
+      const template: any = {
+        name: eventForm.name,
+        category: eventForm.category,
+        type: eventForm.type as 'Individual' | 'Group',
+      };
+      if (eventForm.description) template.description = eventForm.description;
+      if (eventForm.time) template.time = eventForm.time;
+      if (eventForm.venue) template.venue = eventForm.venue;
 
-    // Only include optional fields if they have a value
-    const template: any = {
-      name: eventForm.name,
-      category: eventForm.category,
-      type: eventForm.type as 'Individual' | 'Group',
-    };
-    if (eventForm.description) template.description = eventForm.description;
-    if (eventForm.time) template.time = eventForm.time;
-    if (eventForm.venue) template.venue = eventForm.venue;
+      console.log('Creating event template:', template);
+      await addEventTemplate(template);
+      if (onEventCreated) onEventCreated(eventForm.name);
+      toast({
+        title: "Event Created Successfully",
+        description: `${eventForm.name} has been added to the event list!`
+      });
 
-    console.log('Creating event template:', template);
-    await addEventTemplate(template);
-    if (onEventCreated) onEventCreated(eventForm.name);
-    toast({
-      title: "Event Created Successfully",
-      description: `${eventForm.name} has been added to the event list!`
-    });
-
-    // Reset form
-    setEventForm({
-      name: '',
-      category: '',
-      type: '',
-      description: '',
-      time: '',
-      venue: ''
-    });
+      // Reset form
+      setEventForm({
+        name: '',
+        category: '',
+        type: '',
+        description: '',
+        time: '',
+        venue: ''
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error Creating Event",
+        description: error.message || "An unexpected error occurred",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -151,9 +170,18 @@ const AddEventTemplateForm: React.FC<AddEventTemplateFormProps> = ({ onEventCrea
             </div>
           </div>
           
-          <Button type="submit" className="w-full">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Event
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Creating...
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Event
+              </>
+            )}
           </Button>
         </form>
       </CardContent>

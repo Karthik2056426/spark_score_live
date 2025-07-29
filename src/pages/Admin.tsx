@@ -34,6 +34,7 @@ const Admin: React.FC = () => {
   const [editEvent, setEditEvent] = useState<Event | null>(null);
   const [editForm, setEditForm] = useState<any>(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [resultSubmissionLoading, setResultSubmissionLoading] = useState(false);
   const lastCreatedEventNameRef = useRef<string | null>(null);
 
   // 1. Show all events in the results dropdown (not just those without results)
@@ -229,6 +230,12 @@ const Admin: React.FC = () => {
   // New multi-winner event result submit
   const handleMultiWinnerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (resultSubmissionLoading) {
+      return;
+    }
+    
     if (!eventForm.selectedEventId || !eventForm.category || !eventForm.type) {
       toast({
         title: "Missing Fields",
@@ -237,6 +244,8 @@ const Admin: React.FC = () => {
       });
       return;
     }
+    
+    setResultSubmissionLoading(true);
     const selectedEvent = allEvents.find(e => e.id === eventForm.selectedEventId);
     if (!selectedEvent) {
       toast({
@@ -280,6 +289,8 @@ const Admin: React.FC = () => {
       setEditingWinners([]);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setResultSubmissionLoading(false);
     }
   };
 
@@ -407,14 +418,34 @@ const Admin: React.FC = () => {
             <AddEventTemplateForm onEventCreated={handleEventCreated} />
             
             {/* Add Event Result */}
-            <Card>
+            <Card className={isEditing ? "border-orange-500 bg-orange-50/50" : ""}>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Plus className="h-5 w-5" />
-                  <span>Add Event Results (Winners)</span>
+                  {isEditing ? (
+                    <>
+                      <Trophy className="h-5 w-5 text-orange-600" />
+                      <span className="text-orange-600">Edit Event Results</span>
+                      <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                        Editing Mode
+                      </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-5 w-5" />
+                      <span>Add Event Results (Winners)</span>
+                    </>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {isEditing && (
+                  <div className="mb-4 p-3 bg-orange-100 border border-orange-200 rounded-lg">
+                    <p className="text-sm text-orange-800">
+                      <strong>Edit Mode:</strong> You are editing existing results for this event. 
+                      Make your changes and click "Save Results" to update.
+                    </p>
+                  </div>
+                )}
                 <form onSubmit={handleMultiWinnerSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -633,9 +664,53 @@ const Admin: React.FC = () => {
                       + Add Winner
                     </Button>
                   </div>
-                  <Button type="submit" className="w-full">
-                    {isEditing ? 'Save Results' : 'Add Results'}
-                  </Button>
+                  <div className="flex gap-3">
+                    <Button 
+                      type="submit" 
+                      className="flex-1" 
+                      disabled={resultSubmissionLoading}
+                    >
+                      {resultSubmissionLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          {isEditing ? 'Saving...' : 'Adding...'}
+                        </>
+                      ) : (
+                        isEditing ? 'Save Results' : 'Add Results'
+                      )}
+                    </Button>
+                    {isEditing && (
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        disabled={resultSubmissionLoading}
+                        onClick={() => {
+                          // Reset edit mode
+                          setIsEditing(false);
+                          setEditingWinners([]);
+                          // Reset form
+                          setEventForm({ name: '', category: '', type: '', house: '', position: '', selectedEventId: '' });
+                          // Reset winners to default
+                          setMultiWinners([
+                            { house: '', position: 1, studentName: '', studentClass: '', image: '' },
+                            { house: '', position: 2, studentName: '', studentClass: '', image: '' },
+                            { house: '', position: 3, studentName: '', studentClass: '', image: '' },
+                          ]);
+                          // Clear selected event ref
+                          selectedEventRef.current = '';
+                          // Show feedback
+                          toast({
+                            title: "Edit Cancelled",
+                            description: "Changes discarded and edit mode disabled.",
+                            variant: "default"
+                          });
+                        }}
+                        className="px-6"
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
                 </form>
               </CardContent>
             </Card>
