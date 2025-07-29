@@ -29,33 +29,23 @@ const HouseCard: React.FC<HouseCardProps> = ({ house }) => {
   return (
     <Card className={`${borderClass} ${bgClass} ${glowClass} transition-all duration-500 hover:scale-105 animate-slide-up group`}>
       <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          {/* Rank emoji on the left */}
-          <div className="text-2xl flex-shrink-0 mt-1">
-            {getRankEmoji(house.rank)}
-          </div>
+        <div className="text-center">
+          {/* Rank emoji at the top center */}
+          <div className="flex justify-center mb-2">
+            <div className="text-2xl">
+              {getRankEmoji(house.rank)}
+            </div>
+                    </div>
           
-          {/* Main content on the right */}
-          <div className="flex-1 text-center">
-            <div className="flex justify-center mb-2">
-              <Badge 
-                variant="secondary" 
-                className={`bg-${house.color}/20 text-${house.color}-foreground border-${house.color}/50 text-xs px-2 py-0.5`}
-              >
-                #{house.rank}
-              </Badge>
+          <h3 className={`text-lg font-bold mb-2 text-${house.color}-foreground`}>
+            {house.name}
+          </h3>
+          
+          <div>
+            <div className={`text-3xl font-mono font-bold text-${house.color}-foreground animate-score-bounce`}>
+              {house.score}
             </div>
-            
-            <h3 className={`text-lg font-bold mb-2 text-${house.color}-foreground`}>
-              {house.name}
-            </h3>
-            
-            <div>
-              <div className={`text-3xl font-mono font-bold text-${house.color}-foreground animate-score-bounce`}>
-                {house.score}
-              </div>
-              <p className="text-muted-foreground text-xs">TOTAL POINTS</p>
-            </div>
+            <p className="text-muted-foreground text-xs">TOTAL POINTS</p>
           </div>
         </div>
       </CardContent>

@@ -28,22 +28,8 @@ const Winners = () => {
     return () => clearInterval(interval);
   }, [emblaApi]);
 
-  const getPositionIcon = (position: number) => {
-    switch (position) {
-      case 1: return '🥇';
-      case 2: return '🥈';
-      case 3: return '🥉';
-      default: return '🏅';
-    }
-  };
-
-  const getPositionText = (position: number) => {
-    switch (position) {
-      case 1: return 'First Place';
-      case 2: return 'Second Place';
-      case 3: return 'Third Place';
-      default: return `Position ${position}`;
-    }
+  const getPositionDisplay = (position: number) => {
+    return `#${position}`;
   };
 
   // Group winners by event name + category (only events with results)
@@ -100,7 +86,7 @@ const Winners = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Live House Standings - Left Side */}
-          <div className="lg:w-1/4 flex-shrink-0">
+          <div className="lg:w-1/5 flex-shrink-0">
             <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
               {houses.map((house, index) => (
                 <div key={house.name} style={{ animationDelay: `${index * 0.2}s` }}>
@@ -111,7 +97,7 @@ const Winners = () => {
           </div>
 
           {/* Winners Carousel Section - Right Side */}
-          <div className="lg:w-3/4 flex-1">
+          <div className="lg:w-4/5 flex-1">
             <Carousel className="w-full" opts={{ loop: true }} setApi={setEmblaApi}>
           <CarouselContent>
             {Object.entries(eventWinnersMap).map(([eventName, winnersArr], idx) => (
@@ -124,53 +110,82 @@ const Winners = () => {
                     {getCategoryDisplay(winnersArr[0]?.eventCategory)}
                   </p>
                 </div>
-                <div className={`flex flex-wrap justify-center gap-4`}>
-                  {winnersArr.map((winner, i) => {
-                    // Calculate dynamic width based on number of winners
+                <div className={`grid gap-2 justify-items-center items-stretch`} style={{
+                  gridTemplateColumns: (() => {
                     const numWinners = winnersArr.length;
-                    let cardWidth = '';
-                    let cardSize = '';
-                    
                     if (numWinners <= 3) {
-                      cardWidth = 'flex-1 min-w-[200px] max-w-sm'; // Large cards for 1-3 winners
-                      cardSize = 'p-6';
-                    } else if (numWinners <= 5) {
-                      cardWidth = 'flex-1 min-w-[160px] max-w-[200px]'; // Medium cards for 4-5 winners
-                      cardSize = 'p-4';
+                      return `repeat(${numWinners}, 1fr)`; // Single row for 1-3
+                    } else if (numWinners === 4) {
+                      return 'repeat(2, 1fr)'; // 2x2 grid for 4
+                    } else if (numWinners === 5) {
+                      return 'repeat(3, 1fr)'; // 3 columns for 5 (3 top, 2 bottom)
+                    } else if (numWinners === 6) {
+                      return 'repeat(3, 1fr)'; // 3 columns for 6 (3 top, 3 bottom)
                     } else if (numWinners <= 8) {
-                      cardWidth = 'flex-1 min-w-[140px] max-w-[160px]'; // Small cards for 6-8 winners
-                      cardSize = 'p-3';
+                      return 'repeat(4, 1fr)'; // 4 columns for 7-8
                     } else {
-                      cardWidth = 'flex-1 min-w-[120px] max-w-[140px]'; // Extra small for 9+ winners
-                      cardSize = 'p-2';
+                      return 'repeat(4, 1fr)'; // 4 columns for 9+
                     }
+                  })()
+                }}>
+                  {winnersArr.map((winner, i) => {
+                    const numWinners = winnersArr.length;
+                    const studentName = winner.studentName || 'Student Name';
                     
-                                         return (
-                     <Card key={`${eventName}-${winner.house}-${winner.position}`} className={`${cardWidth} mx-2`}>
-                                              <CardContent className={`flex flex-col items-center ${cardSize}`}>
-                         {/* Position */}
-                         <div className={`font-bold mb-2 ${numWinners <= 3 ? 'text-4xl' : numWinners <= 5 ? 'text-3xl' : numWinners <= 8 ? 'text-2xl' : 'text-xl'}`}>
-                           {getPositionIcon(winner.position)}
+                    // Calculate dynamic font size based on name length
+                    const getNameFontSize = (name: string, baseSize: string) => {
+                      const nameLength = name.length;
+                      if (nameLength <= 12) return baseSize;
+                      if (nameLength <= 18) {
+                        // Reduce by one size
+                        if (baseSize === 'text-xl') return 'text-lg';
+                        if (baseSize === 'text-lg') return 'text-base';
+                        if (baseSize === 'text-base') return 'text-sm';
+                        return 'text-sm';
+                      }
+                      // For very long names, reduce by two sizes
+                      if (baseSize === 'text-xl') return 'text-base';
+                      if (baseSize === 'text-lg') return 'text-sm';
+                      if (baseSize === 'text-base') return 'text-xs';
+                      return 'text-xs';
+                    };
+                    
+                    const baseFontSize = numWinners <= 3 ? 'text-2xl' : numWinners <= 6 ? 'text-xl' : 'text-lg';
+                    const nameFontSize = getNameFontSize(studentName, baseFontSize);
+                    
+                                                              return (
+                     <Card key={`${eventName}-${winner.house}-${winner.position}`} className="w-full h-full flex flex-col min-h-[200px]">
+                       <CardContent className="p-6 flex flex-col h-full">
+                         {/* Top section: Position and House */}
+                         <div className="flex items-center justify-between mb-4">
+                           <div className={`font-bold ${numWinners <= 3 ? 'text-5xl' : numWinners <= 6 ? 'text-4xl' : 'text-3xl'}`}>
+                             {getPositionDisplay(winner.position)}
+                           </div>
+                           <div className={`rounded-full font-semibold ${numWinners <= 3 ? 'px-4 py-2 text-base' : 'px-3 py-1 text-sm'} ${getHouseColor(winner.house)}`}>
+                             {winner.house}
+                           </div>
                          </div>
-                         {/* House pill */}
-                         <div className={`rounded-full mb-3 font-semibold ${numWinners <= 3 ? 'px-4 py-1 text-sm' : numWinners <= 5 ? 'px-3 py-1 text-xs' : 'px-2 py-0.5 text-xs'} ${getHouseColor(winner.house)}`}>
-                           {winner.house}
+                         
+                         {/* Bottom section: Photo left, Name & Score right */}
+                         <div className="flex items-center gap-4 flex-1">
+                           {/* Winner photo */}
+                           <div className={`rounded-full bg-secondary/30 flex items-center justify-center overflow-hidden flex-shrink-0 ${numWinners <= 3 ? 'w-24 h-24' : numWinners <= 6 ? 'w-20 h-20' : 'w-18 h-18'}`}>
+                             <img src={winner.image ? winner.image : "/public/placeholder.svg"} alt="Winner" className="w-full h-full object-cover" />
+                           </div>
+                           
+                           {/* Name and score */}
+                           <div className="flex-1 min-w-0 flex flex-col justify-center">
+                             <div className={`font-medium text-foreground leading-tight ${nameFontSize}`} style={{ wordBreak: 'break-word', hyphens: 'auto' }}>
+                               {studentName}
+                             </div>
+                             <div className={`text-muted-foreground font-medium mt-2 ${numWinners <= 3 ? 'text-xl' : numWinners <= 6 ? 'text-lg' : 'text-base'}`}>
+                               +{winner.points || 0} pts
+                             </div>
+                           </div>
                          </div>
-                         {/* Winner photo: use uploaded image if available */}
-                         <div className={`mb-3 rounded-full bg-secondary/30 flex items-center justify-center overflow-hidden ${numWinners <= 3 ? 'w-24 h-24' : numWinners <= 5 ? 'w-20 h-20' : numWinners <= 8 ? 'w-16 h-16' : 'w-12 h-12'}`}>
-                           <img src={winner.image ? winner.image : "/public/placeholder.svg"} alt="Winner" className="w-full h-full object-cover" />
-                         </div>
-                         {/* Student name */}
-                         <div className={`font-medium text-foreground mb-1 ${numWinners <= 3 ? 'text-lg' : numWinners <= 5 ? 'text-base' : numWinners <= 8 ? 'text-sm' : 'text-xs'}`}>
-                           {winner.studentName || 'Student Name'}
-                         </div>
-                         {/* Points earned */}
-                         <div className={`text-muted-foreground ${numWinners <= 3 ? 'text-base' : numWinners <= 5 ? 'text-sm' : 'text-xs'}`}>
-                           +{winner.points || 0} pts
-                         </div>
-                      </CardContent>
-                    </Card>
-                    );
+                       </CardContent>
+                     </Card>
+                     );
                   })}
                 </div>
               </CarouselItem>
