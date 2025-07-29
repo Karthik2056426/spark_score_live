@@ -46,17 +46,20 @@ const Winners = () => {
     }
   };
 
-  // Group winners by event name (only events with results)
+  // Group winners by event name + category (only events with results)
   const eventsWithResults = events.filter(event => event.hasResults && event.winners);
   const eventWinnersMap = eventsWithResults.reduce((acc, event) => {
-    if (!acc[event.name]) acc[event.name] = [];
+    // Create unique key using name + category to separate different categories of same event
+    const eventKey = `${event.name} (${event.category})`;
+    if (!acc[eventKey]) acc[eventKey] = [];
     // Add event info to each winner
     event.winners!.forEach(winner => {
-      acc[event.name].push({
+      acc[eventKey].push({
         ...winner,
         eventName: event.name,
         eventCategory: event.category,
-        eventType: event.type
+        eventType: event.type,
+        eventDisplayName: eventKey
       });
     });
     return acc;
@@ -75,6 +78,21 @@ const Winners = () => {
       case 'nehru': return 'bg-nehru text-white';
       default: return 'bg-secondary text-foreground';
     }
+  };
+
+  const getCategoryDisplay = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      'Cat1': 'Cat 1 (LKG- UKG)', 
+      'Cat2': 'Cat 2 (class 1-2)', 
+      'Cat3': 'Cat 3 (class 3-5)', 
+      'Cat4': 'Cat 4 (class 6-8)', 
+      'Cat5': 'Cat 5 (class 9-12)', 
+      'All': 'All Categories',
+      // Legacy mappings for existing data
+      '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6',
+      'Junior': 'Junior (1-5)', 'Middle': 'Middle (6-8)', 'Senior': 'Senior (9-12)'
+    };
+    return categoryMap[category] || category;
   };
 
   return (
@@ -99,7 +117,12 @@ const Winners = () => {
             {Object.entries(eventWinnersMap).map(([eventName, winnersArr], idx) => (
               <CarouselItem key={eventName} className="px-2">
                 <div className="mb-6 text-center">
-                  <h2 className="text-2xl font-bold text-foreground mb-2">{eventName}</h2>
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
+                    {winnersArr[0]?.eventName}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {getCategoryDisplay(winnersArr[0]?.eventCategory)}
+                  </p>
                 </div>
                 <div className={`flex flex-wrap justify-center gap-4`}>
                   {winnersArr.map((winner, i) => {
