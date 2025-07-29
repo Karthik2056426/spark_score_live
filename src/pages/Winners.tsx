@@ -1,9 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Trophy, Medal, ArrowLeft } from "lucide-react";
 import { useSparkData } from "@/hooks/useSparkData";
-import Header from "@/components/Header";
+import { useNavigate } from "react-router-dom";
+import HouseCard from "@/components/HouseCard";
 import {
   Carousel,
   CarouselContent,
@@ -13,8 +15,9 @@ import {
 } from "@/components/ui/carousel";
 
 const Winners = () => {
-  const { events } = useSparkData();
+  const { events, houses } = useSparkData();
   const [emblaApi, setEmblaApi] = useState<any>(null);
+  const navigate = useNavigate();
 
   // Auto-advance carousel every 5 seconds
   useEffect(() => {
@@ -75,14 +78,23 @@ const Winners = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background relative">
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4">All Winners</h1>
-          <p className="text-muted-foreground">Celebrating our SPARK champions</p>
-        </div>
-        <Carousel className="w-full" opts={{ loop: true }} setApi={setEmblaApi}>
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Live House Standings - Left Side */}
+          <div className="lg:w-1/4 flex-shrink-0">
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+              {houses.map((house, index) => (
+                <div key={house.name} style={{ animationDelay: `${index * 0.2}s` }}>
+                  <HouseCard house={house} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Winners Carousel Section - Right Side */}
+          <div className="lg:w-3/4 flex-1">
+            <Carousel className="w-full" opts={{ loop: true }} setApi={setEmblaApi}>
           <CarouselContent>
             {Object.entries(eventWinnersMap).map(([eventName, winnersArr], idx) => (
               <CarouselItem key={eventName} className="px-2">
@@ -112,10 +124,20 @@ const Winners = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
         </Carousel>
+          </div>
+        </div>
       </div>
+      
+      {/* Back Button - Bottom Right */}
+      <Button
+        onClick={() => navigate('/')}
+        className="fixed bottom-6 right-6 z-50 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
+        size="lg"
+      >
+        <ArrowLeft className="h-5 w-5 mr-2" />
+        Back to Home
+      </Button>
     </div>
   );
 };

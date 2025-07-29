@@ -11,11 +11,14 @@ interface HouseCardProps {
   };
 }
 
-const rankEmojis = {
-  1: '🥇',
-  2: '🥈', 
-  3: '🥉',
-  4: '🏅'
+const getRankEmoji = (rank: number) => {
+  // Handle ties properly - same rank gets same emoji
+  switch (rank) {
+    case 1: return '🥇'; // Gold for 1st place
+    case 2: return '🥈'; // Silver for 2nd place  
+    case 3: return '🥉'; // Bronze for 3rd place
+    default: return '🏅'; // Generic medal for 4th+ place
+  }
 };
 
 const HouseCard: React.FC<HouseCardProps> = ({ house }) => {
@@ -25,36 +28,35 @@ const HouseCard: React.FC<HouseCardProps> = ({ house }) => {
   
   return (
     <Card className={`${borderClass} ${bgClass} ${glowClass} transition-all duration-500 hover:scale-105 animate-slide-up group`}>
-      <CardContent className="p-6 text-center">
-        <div className="flex items-center justify-center mb-4">
-          <div className="text-4xl mr-2">
-            {rankEmojis[house.rank as keyof typeof rankEmojis] || '🏅'}
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          {/* Rank emoji on the left */}
+          <div className="text-2xl flex-shrink-0 mt-1">
+            {getRankEmoji(house.rank)}
           </div>
-          <Badge 
-            variant="secondary" 
-            className={`bg-${house.color}/20 text-${house.color}-foreground border-${house.color}/50`}
-          >
-            #{house.rank}
-          </Badge>
-        </div>
-        
-        <h3 className={`text-2xl font-bold mb-2 text-${house.color}-foreground`}>
-          {house.name}
-        </h3>
-        
-        <div className="mb-4">
-          <div className={`text-5xl font-mono font-bold text-${house.color}-foreground animate-score-bounce`}>
-            {house.score}
+          
+          {/* Main content on the right */}
+          <div className="flex-1 text-center">
+            <div className="flex justify-center mb-2">
+              <Badge 
+                variant="secondary" 
+                className={`bg-${house.color}/20 text-${house.color}-foreground border-${house.color}/50 text-xs px-2 py-0.5`}
+              >
+                #{house.rank}
+              </Badge>
+            </div>
+            
+            <h3 className={`text-lg font-bold mb-2 text-${house.color}-foreground`}>
+              {house.name}
+            </h3>
+            
+            <div>
+              <div className={`text-3xl font-mono font-bold text-${house.color}-foreground animate-score-bounce`}>
+                {house.score}
+              </div>
+              <p className="text-muted-foreground text-xs">TOTAL POINTS</p>
+            </div>
           </div>
-          <p className="text-muted-foreground text-sm">TOTAL POINTS</p>
-        </div>
-        
-        {/* Progress bar */}
-        <div className="w-full bg-secondary/30 rounded-full h-2 overflow-hidden">
-          <div 
-            className={`h-full bg-${house.color} transition-all duration-1000 ease-out`}
-            style={{ width: `${Math.min(100, (house.score / 500) * 100)}%` }}
-          />
         </div>
       </CardContent>
     </Card>

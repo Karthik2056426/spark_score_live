@@ -141,8 +141,18 @@ export const useSparkData = () => {
       .reduce((sum, winner) => sum + (winner.points || 0), 0);
     return { ...house, score, rank: 0 };
   });
+  
+  // Sort by score (highest first)
   houses.sort((a, b) => b.score - a.score);
-  houses.forEach((house, idx) => (house.rank = idx + 1));
+  
+  // Assign ranks with proper tie handling
+  let currentRank = 1;
+  houses.forEach((house, idx) => {
+    if (idx > 0 && house.score < houses[idx - 1].score) {
+      currentRank = idx + 1;
+    }
+    house.rank = currentRank;
+  });
 
   return {
     events,
