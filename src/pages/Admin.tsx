@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trophy, BarChart3, Users, Search, Camera } from "lucide-react";
+import { Plus, Trophy, BarChart3, Users, Search, Camera, Download, FileSpreadsheet } from "lucide-react";
 import { useSparkData } from "@/hooks/useSparkData";
 import { useToast } from "@/hooks/use-toast";
+import { exportAllData, exportSeparateFiles } from "@/lib/csvExport";
 import { useState as useReactState } from "react";
 import Header from "@/components/Header";
 import AddEventTemplateForm from "@/components/AddEventTemplateForm";
@@ -23,7 +24,7 @@ const CLOUDINARY_UPLOAD_PRESET = 'spark-winners-pics';
 const CLOUDINARY_CLOUD_NAME = 'dz9oojl6x';
 
 const Admin: React.FC = () => {
-  const { events, addEvent, addEventTemplate, addWinnersToEvent, calculatePoints } = useSparkData();
+  const { events, houses, addEvent, addEventTemplate, addWinnersToEvent, calculatePoints } = useSparkData();
   const { toast } = useToast();
   const [eventSearchQuery, setEventSearchQuery] = useReactState('');
   const [user, setUser] = useState(null);
@@ -418,6 +419,39 @@ const Admin: React.FC = () => {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
           <p className="text-muted-foreground">Manage SPARK - The Patrician Pulse events and scoring</p>
+          
+          {/* CSV Export Buttons */}
+          <div className="flex justify-center gap-4 mt-6">
+            <Button
+              onClick={() => {
+                exportAllData(events, houses);
+                toast({
+                  title: "Export Complete",
+                  description: "All SPARK data exported to CSV file",
+                });
+              }}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Export All Data (Single File)
+            </Button>
+            
+            <Button
+              onClick={() => {
+                exportSeparateFiles(events, houses);
+                toast({
+                  title: "Export Complete", 
+                  description: "Data exported to separate CSV files",
+                });
+              }}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Export Separate Files
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

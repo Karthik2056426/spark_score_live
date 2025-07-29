@@ -35,7 +35,7 @@ const HouseCard: React.FC<HouseCardProps> = ({ house }) => {
             <div className="text-2xl">
               {getRankEmoji(house.rank)}
             </div>
-                    </div>
+          </div>
           
           <h3 className={`text-lg font-bold mb-2 text-${house.color}-foreground`}>
             {house.name}
