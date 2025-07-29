@@ -101,25 +101,54 @@ const Winners = () => {
                 <div className="mb-6 text-center">
                   <h2 className="text-2xl font-bold text-foreground mb-2">{eventName}</h2>
                 </div>
-                <div className={`flex flex-wrap justify-center gap-6`}>
-                  {winnersArr.map((winner, i) => (
-                    <Card key={`${eventName}-${winner.house}-${winner.position}`} className="flex-1 min-w-[220px] max-w-xs mx-2">
-                      <CardContent className="flex flex-col items-center p-6">
-                        {/* Position */}
-                        <div className="text-4xl font-bold mb-2">{getPositionIcon(winner.position)}</div>
-                        {/* House pill */}
-                        <div className={`rounded-full px-4 py-1 mb-3 font-semibold text-sm ${getHouseColor(winner.house)}`}>{winner.house}</div>
-                        {/* Winner photo: use uploaded image if available */}
-                        <div className="w-24 h-24 mb-3 rounded-full bg-secondary/30 flex items-center justify-center overflow-hidden">
-                          <img src={winner.image ? winner.image : "/public/placeholder.svg"} alt="Winner" className="w-full h-full object-cover" />
-                        </div>
-                        {/* Student name */}
-                        <div className="text-lg font-medium text-foreground mb-1">{winner.studentName || 'Student Name'}</div>
-                        {/* Points earned */}
-                        <div className="text-base text-muted-foreground">+{winner.points || 0} pts</div>
+                <div className={`flex flex-wrap justify-center gap-4`}>
+                  {winnersArr.map((winner, i) => {
+                    // Calculate dynamic width based on number of winners
+                    const numWinners = winnersArr.length;
+                    let cardWidth = '';
+                    let cardSize = '';
+                    
+                    if (numWinners <= 3) {
+                      cardWidth = 'flex-1 min-w-[200px] max-w-sm'; // Large cards for 1-3 winners
+                      cardSize = 'p-6';
+                    } else if (numWinners <= 5) {
+                      cardWidth = 'flex-1 min-w-[160px] max-w-[200px]'; // Medium cards for 4-5 winners
+                      cardSize = 'p-4';
+                    } else if (numWinners <= 8) {
+                      cardWidth = 'flex-1 min-w-[140px] max-w-[160px]'; // Small cards for 6-8 winners
+                      cardSize = 'p-3';
+                    } else {
+                      cardWidth = 'flex-1 min-w-[120px] max-w-[140px]'; // Extra small for 9+ winners
+                      cardSize = 'p-2';
+                    }
+                    
+                                         return (
+                     <Card key={`${eventName}-${winner.house}-${winner.position}`} className={`${cardWidth} mx-2`}>
+                                              <CardContent className={`flex flex-col items-center ${cardSize}`}>
+                         {/* Position */}
+                         <div className={`font-bold mb-2 ${numWinners <= 3 ? 'text-4xl' : numWinners <= 5 ? 'text-3xl' : numWinners <= 8 ? 'text-2xl' : 'text-xl'}`}>
+                           {getPositionIcon(winner.position)}
+                         </div>
+                         {/* House pill */}
+                         <div className={`rounded-full mb-3 font-semibold ${numWinners <= 3 ? 'px-4 py-1 text-sm' : numWinners <= 5 ? 'px-3 py-1 text-xs' : 'px-2 py-0.5 text-xs'} ${getHouseColor(winner.house)}`}>
+                           {winner.house}
+                         </div>
+                         {/* Winner photo: use uploaded image if available */}
+                         <div className={`mb-3 rounded-full bg-secondary/30 flex items-center justify-center overflow-hidden ${numWinners <= 3 ? 'w-24 h-24' : numWinners <= 5 ? 'w-20 h-20' : numWinners <= 8 ? 'w-16 h-16' : 'w-12 h-12'}`}>
+                           <img src={winner.image ? winner.image : "/public/placeholder.svg"} alt="Winner" className="w-full h-full object-cover" />
+                         </div>
+                         {/* Student name */}
+                         <div className={`font-medium text-foreground mb-1 ${numWinners <= 3 ? 'text-lg' : numWinners <= 5 ? 'text-base' : numWinners <= 8 ? 'text-sm' : 'text-xs'}`}>
+                           {winner.studentName || 'Student Name'}
+                         </div>
+                         {/* Points earned */}
+                         <div className={`text-muted-foreground ${numWinners <= 3 ? 'text-base' : numWinners <= 5 ? 'text-sm' : 'text-xs'}`}>
+                           +{winner.points || 0} pts
+                         </div>
                       </CardContent>
                     </Card>
-                  ))}
+                    );
+                  })}
                 </div>
               </CarouselItem>
             ))}

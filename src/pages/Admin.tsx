@@ -36,6 +36,7 @@ const Admin: React.FC = () => {
   const [editLoading, setEditLoading] = useState(false);
   const [resultSubmissionLoading, setResultSubmissionLoading] = useState(false);
   const lastCreatedEventNameRef = useRef<string | null>(null);
+  const [eventsSearchQuery, setEventsSearchQuery] = useState('');
 
   // 1. Show all events in the results dropdown (not just those without results)
   const allEvents = events; // No filter
@@ -294,7 +295,14 @@ const Admin: React.FC = () => {
     }
   };
 
-  const recentEvents = eventTemplates.slice(-5).reverse();
+  const allEventsList = events.reverse(); // Show all events, newest first
+  
+  // Filter events based on search query
+  const filteredEventsList = allEventsList.filter(event => 
+    (event.name || '').toLowerCase().includes(eventsSearchQuery.toLowerCase()) ||
+    (event.category || '').toLowerCase().includes(eventsSearchQuery.toLowerCase()) ||
+    (event.type || '').toLowerCase().includes(eventsSearchQuery.toLowerCase())
+  );
 
   // Delete event template
   const handleDeleteEvent = async (eventId: string) => {
@@ -716,7 +724,7 @@ const Admin: React.FC = () => {
             </Card>
           </div>
 
-          {/* Stats & Recent Events */}
+          {/* Stats & All Events */}
           <div className="space-y-6">
             {/* Add Winner Photo */}
             <AddWinnerPhotoForm />
@@ -745,16 +753,27 @@ const Admin: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Recent Events */}
+            {/* All Events */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Trophy className="h-5 w-5" />
-                  <span>Recent Events</span>
+                  <span>All Events</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {recentEvents.map((event) => (
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search events by name, category, or type..."
+                    value={eventsSearchQuery}
+                    onChange={(e) => setEventsSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                {filteredEventsList.map((event) => (
                   <div key={event.id} className="flex justify-between items-center p-3 rounded-lg bg-secondary/30">
                     <div>
                       <div className="font-medium text-sm">{event.name}</div>
@@ -767,10 +786,18 @@ const Admin: React.FC = () => {
                   </div>
                 ))}
                 
-                {recentEvents.length === 0 && (
+                {filteredEventsList.length === 0 && allEventsList.length === 0 && (
                   <div className="text-center py-4 text-muted-foreground">
                     <Users className="h-8 w-8 mx-auto mb-2" />
                     <p className="text-sm">No events added yet</p>
+                  </div>
+                )}
+                
+                {filteredEventsList.length === 0 && allEventsList.length > 0 && (
+                  <div className="text-center py-4 text-muted-foreground">
+                    <Search className="h-8 w-8 mx-auto mb-2" />
+                    <p className="text-sm">No events match your search</p>
+                    <p className="text-xs">Try different keywords or clear the search</p>
                   </div>
                 )}
               </CardContent>
