@@ -25,7 +25,7 @@ const Header: React.FC = () => {
           {/* Logo */}
           <div className="flex items-center space-x-3">
             <img 
-              src="/lovable-uploads/db2da13b-681b-48c0-b1ee-e2995b83c8d0.png" 
+              src="/lovable-uploads/IMG_20250728_102056_264 (1).png" 
               alt="St. Patrick's School Mananthavady" 
               className="w-12 h-12 object-contain"
             />

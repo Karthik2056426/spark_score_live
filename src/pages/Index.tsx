@@ -25,7 +25,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center mb-6">
             <img 
-              src="/lovable-uploads/db2da13b-681b-48c0-b1ee-e2995b83c8d0.png" 
+              src="/lovable-uploads/IMG_20250728_102056_264 (1).png" 
               alt="St. Patrick's School" 
               className="w-20 h-20 mr-4 drop-shadow-lg"
             />
@@ -171,7 +171,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto text-center">
           <div className="flex items-center justify-center mb-4">
             <img 
-              src="/lovable-uploads/db2da13b-681b-48c0-b1ee-e2995b83c8d0.png" 
+              src="/lovable-uploads/IMG_20250728_102056_264 (1).png" 
               alt="St. Patrick's School" 
               className="w-8 h-8 mr-2"
             />
