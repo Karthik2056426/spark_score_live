@@ -45,6 +45,7 @@ const Admin: React.FC = () => {
   // 2. Add state for editing mode and selected event's winners
   const [editingWinners, setEditingWinners] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [customResultsMode, setCustomResultsMode] = useState(false);
 
   // Get events without results (templates)
   // Handle legacy events that might not have hasResults field
@@ -154,14 +155,14 @@ const Admin: React.FC = () => {
 
   // Multi-winner event result form state
   const [multiWinners, setMultiWinners] = useState([
-    { house: '', position: 1, studentName: '', studentClass: '', image: '' },
-    { house: '', position: 2, studentName: '', studentClass: '', image: '' },
-    { house: '', position: 3, studentName: '', studentClass: '', image: '' },
+    { house: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
+    { house: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
+    { house: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
   ]);
 
   // Add a new winner row
   const addWinnerRow = () => {
-    setMultiWinners(prev => [...prev, { house: '', position: prev.length + 1, studentName: '', studentClass: '', image: '' }]);
+    setMultiWinners(prev => [...prev, { house: '', position: prev.length + 1, studentName: '', studentClass: '', image: '', points: 0 }]);
   };
 
   // Remove a winner row by index
@@ -272,7 +273,7 @@ const Admin: React.FC = () => {
         position: Number(winner.position),
         studentName: winner.studentName,
         studentClass: winner.studentClass,
-        points: calculatePoints(Number(winner.position), eventForm.type as 'Individual' | 'Group'),
+        points: customResultsMode ? Number(winner.points) : calculatePoints(Number(winner.position), eventForm.type as 'Individual' | 'Group'),
         image: winner.image || ''
       }));
       // 2. If editing, update winners; else, add winners
@@ -283,9 +284,9 @@ const Admin: React.FC = () => {
       });
       setEventForm({ name: '', category: '', type: '', house: '', position: '', selectedEventId: '' });
       setMultiWinners([
-        { house: '', position: 1, studentName: '', studentClass: '', image: '' },
-        { house: '', position: 2, studentName: '', studentClass: '', image: '' },
-        { house: '', position: 3, studentName: '', studentClass: '', image: '' },
+        { house: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
+        { house: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
+        { house: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
       ]);
       setIsEditing(false);
       setEditingWinners([]);
@@ -488,6 +489,36 @@ const Admin: React.FC = () => {
                     </p>
                   </div>
                 )}
+                {/* Results Mode Toggle */}
+                <div className="mb-6 p-4 bg-secondary/20 rounded-lg border">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold">Results Mode</h3>
+                    <Button
+                      type="button"
+                      variant={customResultsMode ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCustomResultsMode(!customResultsMode)}
+                    >
+                      {customResultsMode ? "Switch to Standard Mode" : "Switch to Custom Mode"}
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {customResultsMode ? (
+                      <div className="space-y-1">
+                        <p>🎯 <strong>Custom Mode:</strong> Set any position and points for each winner</p>
+                        <p>• Perfect for special events with unique scoring</p>
+                        <p>• Full control over positions and point values</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-1">
+                        <p>📊 <strong>Standard Mode:</strong> Predefined points based on position</p>
+                        <p>• Individual events: 1st=10pts, 2nd=7pts, 3rd=5pts, 4th+=3pts</p>
+                        <p>• Group events: 1st=15pts, 2nd=10pts, 3rd=7pts, 4th+=5pts</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <form onSubmit={handleMultiWinnerSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -524,9 +555,9 @@ const Admin: React.FC = () => {
                               setEditingWinners([]);
                               setIsEditing(false);
                               setMultiWinners([
-                                { house: '', position: 1, studentName: '', studentClass: '', image: '' },
-                                { house: '', position: 2, studentName: '', studentClass: '', image: '' },
-                                { house: '', position: 3, studentName: '', studentClass: '', image: '' },
+                                { house: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
+                                { house: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
+                                { house: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
                               ]);
                             }
                           }
@@ -694,11 +725,23 @@ const Admin: React.FC = () => {
                             required
                           />
                         </div>
-                        <div className="w-32 text-center">
-                          <Label>Points</Label>
-                          <div className="text-lg font-bold text-green-600 mt-1">
-                            +{calculatePoints(Number(winner.position), eventForm.type as 'Individual' | 'Group')} pts
-                          </div>
+                        <div className="w-32">
+                          <Label htmlFor={`points-${idx}`}>Points</Label>
+                          {customResultsMode ? (
+                            <Input
+                              id={`points-${idx}`}
+                              type="number"
+                              value={winner.points || ''}
+                              onChange={e => updateWinnerRow(idx, 'points', e.target.value)}
+                              placeholder="Custom points"
+                              min={0}
+                              required
+                            />
+                          ) : (
+                            <div className="text-lg font-bold text-green-600 mt-1 text-center">
+                              +{calculatePoints(Number(winner.position), eventForm.type as 'Individual' | 'Group')} pts
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -734,9 +777,9 @@ const Admin: React.FC = () => {
                           setEventForm({ name: '', category: '', type: '', house: '', position: '', selectedEventId: '' });
                           // Reset winners to default
                           setMultiWinners([
-                            { house: '', position: 1, studentName: '', studentClass: '', image: '' },
-                            { house: '', position: 2, studentName: '', studentClass: '', image: '' },
-                            { house: '', position: 3, studentName: '', studentClass: '', image: '' },
+                            { house: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
+                            { house: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
+                            { house: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
                           ]);
                           // Clear selected event ref
                           selectedEventRef.current = '';
