@@ -419,7 +419,7 @@ const Admin: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
-          <p className="text-muted-foreground">Manage SPARK - The Patrician Pulse events and scoring</p>
+          <p className="text-muted-foreground">Manage SPARKLE events and scoring</p>
           
           {/* CSV Export Buttons */}
           <div className="flex justify-center gap-4 mt-6">
