@@ -4,12 +4,12 @@ import { getAuth } from 'firebase/auth';
 
 // TODO: Replace with your own Firebase config
 const firebaseConfig = {
-  apiKey: 'AIzaSyD5ywoPmu3eKHJz7YCOPZXWJB8FoV3IMmY',
-  authDomain: 'spa-scores-spark.firebaseapp.com',
-  projectId: 'spa-scores-spark',
-  storageBucket: 'spa-scores-spark.appspot.com',
-  messagingSenderId: '1016059668517',
-  appId: '1:1016059668517:web:0f21514aa60238ed43b7cc',
+  apiKey: 'AIzaSyBZfJwoNLYvDCuTHv4gQEEGoyEljBWMaf0',
+  authDomain: 'spa-juniors.firebaseapp.com',
+  projectId: 'spa-juniors',
+  storageBucket: 'spa-juniors.firebasestorage.app',
+  messagingSenderId: '191398693192',
+  appId: '1:191398693192:web:87eee4e71c20ffd1190b7d',
 };
 
 const app = initializeApp(firebaseConfig);
