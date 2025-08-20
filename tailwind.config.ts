@@ -78,10 +78,10 @@ export default {
 					foreground: 'hsl(var(--gandhi-foreground))',
 					glow: 'hsl(var(--gandhi-glow))'
 				},
-				nehru: {
-					DEFAULT: 'hsl(var(--nehru))',
-					foreground: 'hsl(var(--nehru-foreground))',
-					glow: 'hsl(var(--nehru-glow))'
+				aloysius: {
+					DEFAULT: 'hsl(var(--aloysius))',
+					foreground: 'hsl(var(--aloysius-foreground))',
+					glow: 'hsl(var(--aloysius-glow))'
 				}
 			},
 			backgroundImage: {

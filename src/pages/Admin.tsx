@@ -20,7 +20,7 @@ import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import axios from 'axios';
 
-const CLOUDINARY_UPLOAD_PRESET = 'spark-winners-pics';
+const CLOUDINARY_UPLOAD_PRESET = 'SPA-juniors';
 const CLOUDINARY_CLOUD_NAME = 'dz9oojl6x';
 
 const Admin: React.FC = () => {
@@ -674,7 +674,7 @@ const Admin: React.FC = () => {
                             <SelectContent>
                               <SelectItem value="Tagore">Tagore</SelectItem>
                               <SelectItem value="Gandhi">Gandhi</SelectItem>
-                              <SelectItem value="Nehru">Nehru</SelectItem>
+                              <SelectItem value="Aloysius">Aloysius</SelectItem>
                               <SelectItem value="Delany">Delany</SelectItem>
                             </SelectContent>
                           </Select>

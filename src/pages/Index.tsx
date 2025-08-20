@@ -99,7 +99,7 @@ const Index = () => {
                   case 'tagore': return 'border-tagore bg-tagore/10 hover:bg-tagore/20';
                   case 'delany': return 'border-delany bg-delany/10 hover:bg-delany/20';
                   case 'gandhi': return 'border-gandhi bg-gandhi/10 hover:bg-gandhi/20';
-                  case 'nehru': return 'border-nehru bg-nehru/10 hover:bg-nehru/20';
+                  case 'aloysius': return 'border-aloysius bg-aloysius/10 hover:bg-aloysius/20';
                   default: return 'border-border bg-secondary/10 hover:bg-secondary/20';
                 }
               };

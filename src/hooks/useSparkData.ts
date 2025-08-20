@@ -12,7 +12,7 @@ export interface House {
   name: string;
   score: number;
   rank: number;
-  color: 'tagore' | 'delany' | 'gandhi' | 'nehru';
+  color: 'tagore' | 'delany' | 'gandhi' | 'aloysius';
 }
 
 export interface Winner {
@@ -43,7 +43,7 @@ export interface Event {
 const HOUSE_LIST: Omit<House, 'score' | 'rank'>[] = [
   { name: 'Tagore', color: 'tagore' },
   { name: 'Gandhi', color: 'gandhi' },
-  { name: 'Nehru', color: 'nehru' },
+  { name: 'Aloysius', color: 'aloysius' },
   { name: 'Delany', color: 'delany' },
 ];
 

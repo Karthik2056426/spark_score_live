@@ -61,7 +61,7 @@ const Winners = () => {
       case 'tagore': return 'bg-tagore text-white';
       case 'delany': return 'bg-delany text-white';
       case 'gandhi': return 'bg-gandhi text-white';
-      case 'nehru': return 'bg-nehru text-white';
+      case 'aloysius': return 'bg-aloysius text-white';
       default: return 'bg-secondary text-foreground';
     }
   };

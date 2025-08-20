@@ -53,9 +53,9 @@ All colors MUST be HSL.
     --gandhi-foreground: 240 10% 3.9%;
     --gandhi-glow: 54 100% 62% / 0.3;
 
-    --nehru: 0 100% 50%;             /* Rosso Corsa Red */
-    --nehru-foreground: 0 0% 98%;
-    --nehru-glow: 0 100% 50% / 0.3;
+    --aloysius: 0 100% 50%;             /* Rosso Corsa Red */
+    --aloysius-foreground: 0 0% 98%;
+    --aloysius-glow: 0 100% 50% / 0.3;
 
     /* Apple-inspired gradients */
     --gradient-rainbow: linear-gradient(90deg, 

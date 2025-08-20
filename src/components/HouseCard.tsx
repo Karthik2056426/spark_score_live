@@ -7,7 +7,7 @@ interface HouseCardProps {
     name: string;
     score: number;
     rank: number;
-    color: 'tagore' | 'delany' | 'gandhi' | 'nehru';
+    color: 'tagore' | 'delany' | 'gandhi' | 'aloysius';
   };
 }
 

@@ -46,7 +46,7 @@ const WinnersCarousel: React.FC = () => {
       case 'tagore': return 'border-tagore bg-tagore/10';
       case 'delany': return 'border-delany bg-delany/10';
       case 'gandhi': return 'border-gandhi bg-gandhi/10';
-      case 'nehru': return 'border-nehru bg-nehru/10';
+      case 'aloysius': return 'border-aloysius bg-aloysius/10';
       default: return 'border-border bg-secondary/10';
     }
   };

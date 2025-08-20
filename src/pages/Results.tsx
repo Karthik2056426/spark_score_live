@@ -43,7 +43,7 @@ const Results: React.FC = () => {
       'Tagore': 'tagore',
       'Delany': 'delany', 
       'Gandhi': 'gandhi',
-      'Nehru': 'nehru'
+      'Aloysius': 'aloysius'
     };
     return colors[house as keyof typeof colors] || 'primary';
   };
