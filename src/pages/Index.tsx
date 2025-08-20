@@ -30,8 +30,8 @@ const Index = () => {
               className="w-20 h-20 mr-4 drop-shadow-lg"
             />
             <div>
-              <h1 className="text-6xl font-bold text-foreground mb-2">SPARK</h1>
-              <p className="text-xl text-muted-foreground">The Patrician Pulse</p>
+              <h1 className="text-6xl font-bold text-foreground mb-2">SPARKLE</h1>
+
             </div>
           </div>
           
@@ -57,7 +57,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold text-foreground mb-4">Live House Standings</h2>
-            <p className="text-muted-foreground">Real-time rankings from all SPARK events</p>
+            <p className="text-muted-foreground">Real-time rankings from all SPARKLE events</p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -175,7 +175,7 @@ const Index = () => {
               alt="St. Patrick's School" 
               className="w-8 h-8 mr-2"
             />
-            <span className="text-xl font-bold text-foreground">SPARK - The Patrician Pulse</span>
+            <span className="text-xl font-bold text-foreground">SPARKLE</span>
           </div>
           <p className="text-muted-foreground">Celebrating excellence, fostering competition, building character.</p>
         </div>

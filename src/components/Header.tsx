@@ -30,8 +30,8 @@ const Header: React.FC = () => {
               className="w-12 h-12 object-contain"
             />
             <div>
-              <h1 className="text-xl font-bold text-foreground">SPARK</h1>
-              <p className="text-xs text-muted-foreground">The Patrician Pulse</p>
+              <h1 className="text-xl font-bold text-foreground">SPARKLE</h1>
+
             </div>
           </div>
           
