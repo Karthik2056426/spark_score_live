@@ -45,7 +45,7 @@ const Admin: React.FC = () => {
   // 2. Add state for editing mode and selected event's winners
   const [editingWinners, setEditingWinners] = useState<any[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [customResultsMode, setCustomResultsMode] = useState(false);
+  const [customResultsMode, setCustomResultsMode] = useState(true); // Locked to custom mode
 
   // Get events without results (templates)
   // Handle legacy events that might not have hasResults field
@@ -489,33 +489,20 @@ const Admin: React.FC = () => {
                     </p>
                   </div>
                 )}
-                {/* Results Mode Toggle */}
+                {/* Results Mode - Locked to Custom */}
                 <div className="mb-6 p-4 bg-secondary/20 rounded-lg border">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold">Results Mode</h3>
-                    <Button
-                      type="button"
-                      variant={customResultsMode ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setCustomResultsMode(!customResultsMode)}
-                    >
-                      {customResultsMode ? "Switch to Standard Mode" : "Switch to Custom Mode"}
-                    </Button>
+                    <Badge variant="default" className="bg-primary text-primary-foreground">
+                      Custom Mode (Active)
+                    </Badge>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {customResultsMode ? (
-                      <div className="space-y-1">
-                        <p>🎯 <strong>Custom Mode:</strong> Set any position and points for each winner</p>
-                        <p>• Perfect for special events with unique scoring</p>
-                        <p>• Full control over positions and point values</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        <p>📊 <strong>Standard Mode:</strong> Predefined points based on position</p>
-                        <p>• Individual events: 1st=10pts, 2nd=7pts, 3rd=5pts, 4th+=3pts</p>
-                        <p>• Group events: 1st=15pts, 2nd=10pts, 3rd=7pts, 4th+=5pts</p>
-                      </div>
-                    )}
+                    <div className="space-y-1">
+                      <p>🎯 <strong>Custom Mode:</strong> Set any position and points for each winner</p>
+                      <p>• Perfect for special events with unique scoring</p>
+                      <p>• Full control over positions and point values</p>
+                    </div>
                   </div>
                 </div>
 
@@ -727,7 +714,7 @@ const Admin: React.FC = () => {
                         </div>
                         <div className="w-32">
                           <Label htmlFor={`points-${idx}`}>Points</Label>
-                          {customResultsMode ? (
+                          {true ? ( // Always show custom mode input
                             <Input
                               id={`points-${idx}`}
                               type="number"
