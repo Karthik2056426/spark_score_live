@@ -62,27 +62,14 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				},
-				// SPARK House Colors
-				tagore: {
-					DEFAULT: 'hsl(var(--tagore))',
-					foreground: 'hsl(var(--tagore-foreground))',
-					glow: 'hsl(var(--tagore-glow))'
-				},
-				delany: {
-					DEFAULT: 'hsl(var(--delany))',
-					foreground: 'hsl(var(--delany-foreground))',
-					glow: 'hsl(var(--delany-glow))'
-				},
-				gandhi: {
-					DEFAULT: 'hsl(var(--gandhi))',
-					foreground: 'hsl(var(--gandhi-foreground))',
-					glow: 'hsl(var(--gandhi-glow))'
-				},
-				aloysius: {
-					DEFAULT: 'hsl(var(--aloysius))',
-					foreground: 'hsl(var(--aloysius-foreground))',
-					glow: 'hsl(var(--aloysius-glow))'
-				}
+				// SPARKLE Grade Colors
+
+				'grade-lkg': 'hsl(var(--grade-lkg))',
+				'grade-ukg': 'hsl(var(--grade-ukg))',
+				'grade-1': 'hsl(var(--grade-1))',
+				'grade-2': 'hsl(var(--grade-2))',
+				'grade-3': 'hsl(var(--grade-3))',
+				'grade-4': 'hsl(var(--grade-4))'
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',

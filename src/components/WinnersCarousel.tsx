@@ -5,7 +5,7 @@ import { Trophy } from "lucide-react";
 import { useSparkData } from "@/hooks/useSparkData";
 
 const WinnersCarousel: React.FC = () => {
-  const { winners, houses } = useSparkData();
+  const { winners, grades } = useSparkData();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ const WinnersCarousel: React.FC = () => {
   }
 
   const currentWinner = winners[currentIndex];
-  const house = houses.find(h => h.name === currentWinner.house);
+  const grade = grades.find(g => g.fullName === currentWinner.gradeSection);
 
   const getPositionIcon = (position: number) => {
     switch (position) {
@@ -41,18 +41,21 @@ const WinnersCarousel: React.FC = () => {
     }
   };
 
-  const getHouseColor = (houseName: string) => {
-    switch (houseName.toLowerCase()) {
-      case 'tagore': return 'border-tagore bg-tagore/10';
-      case 'delany': return 'border-delany bg-delany/10';
-      case 'gandhi': return 'border-gandhi bg-gandhi/10';
-      case 'aloysius': return 'border-aloysius bg-aloysius/10';
+  const getGradeColor = (gradeSection: string) => {
+    const level = gradeSection?.split('-')[0];
+    switch (level?.toLowerCase()) {
+      case 'lkg': return 'border-red-300 bg-red-50';
+      case 'ukg': return 'border-orange-300 bg-orange-50';
+      case '1': return 'border-yellow-300 bg-yellow-50';
+      case '2': return 'border-green-300 bg-green-50';
+      case '3': return 'border-blue-300 bg-blue-50';
+      case '4': return 'border-purple-300 bg-purple-50';
       default: return 'border-border bg-secondary/10';
     }
   };
 
   return (
-    <Card className={`transition-all duration-1000 ease-in-out border-2 ${getHouseColor(currentWinner.house)} hover:shadow-lg`}>
+    <Card className={`transition-all duration-1000 ease-in-out border-2 ${getGradeColor(currentWinner.gradeSection)} hover:shadow-lg`}>
       <CardContent className="p-6">
         <div className="text-center space-y-4">
           {/* Winner Photo */}
@@ -76,9 +79,9 @@ const WinnersCarousel: React.FC = () => {
             
             <Badge 
               variant="outline" 
-              className={`${getHouseColor(currentWinner.house)} border-current`}
+              className={`${getGradeColor(currentWinner.gradeSection)} border-current`}
             >
-              {currentWinner.house} House
+              Grade {currentWinner.gradeSection}
             </Badge>
           </div>
 

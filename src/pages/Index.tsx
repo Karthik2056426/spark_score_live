@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Trophy, Zap, Calendar, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSparkData } from "@/hooks/useSparkData";
-import HouseCard from "@/components/HouseCard";
+import GradeCard from "@/components/GradeCard";
 import Header from "@/components/Header";
 import WinnersCarousel from "@/components/WinnersCarousel";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { houses, events, winners } = useSparkData();
+  const { grades, gradesByLevel, events, winners } = useSparkData();
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,7 +36,7 @@ const Index = () => {
           </div>
           
           <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Live scoring and results for our annual cultural fest. Watch houses compete in real-time!
+            Live scoring and results for our annual cultural fest. Watch grade sections compete in real-time!
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -56,14 +56,26 @@ const Index = () => {
       <section className="py-16 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-foreground mb-4">Live House Standings</h2>
-            <p className="text-muted-foreground">Real-time rankings from all SPARKLE events</p>
+            <h2 className="text-4xl font-bold text-foreground mb-4">Live Grade Standings</h2>
+            <p className="text-muted-foreground">Real-time rankings from all SPARKLE events by grade categories</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {houses.map((house, index) => (
-              <div key={house.name} style={{ animationDelay: `${index * 0.2}s` }}>
-                <HouseCard house={house} />
+          <div className="space-y-8">
+            {gradesByLevel.map((levelData, levelIndex) => (
+              <div key={levelData.level} className="space-y-4">
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-foreground mb-2">Grade {levelData.level}</h3>
+                  <p className="text-muted-foreground">
+                    Champion: {levelData.champion ? `${levelData.champion.fullName} (${levelData.champion.score} points)` : 'TBD'}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {levelData.grades.slice(0, 5).map((grade, index) => (
+                    <div key={grade.fullName} style={{ animationDelay: `${(levelIndex * 5 + index) * 0.1}s` }}>
+                      <GradeCard grade={grade} />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -94,12 +106,15 @@ const Index = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {winners.slice(0, 3).map((winner, index) => {
-              const getHouseColor = (houseName: string) => {
-                switch (houseName.toLowerCase()) {
-                  case 'tagore': return 'border-tagore bg-tagore/10 hover:bg-tagore/20';
-                  case 'delany': return 'border-delany bg-delany/10 hover:bg-delany/20';
-                  case 'gandhi': return 'border-gandhi bg-gandhi/10 hover:bg-gandhi/20';
-                  case 'aloysius': return 'border-aloysius bg-aloysius/10 hover:bg-aloysius/20';
+              const getGradeColor = (gradeSection: string) => {
+                const level = gradeSection?.split('-')[0];
+                switch (level?.toLowerCase()) {
+                  case 'lkg': return 'border-red-300 bg-red-50 hover:bg-red-100';
+                  case 'ukg': return 'border-orange-300 bg-orange-50 hover:bg-orange-100';
+                  case '1': return 'border-yellow-300 bg-yellow-50 hover:bg-yellow-100';
+                  case '2': return 'border-green-300 bg-green-50 hover:bg-green-100';
+                  case '3': return 'border-blue-300 bg-blue-50 hover:bg-blue-100';
+                  case '4': return 'border-purple-300 bg-purple-50 hover:bg-purple-100';
                   default: return 'border-border bg-secondary/10 hover:bg-secondary/20';
                 }
               };
@@ -107,7 +122,7 @@ const Index = () => {
               return (
                 <Card 
                   key={winner.id} 
-                  className={`hover:shadow-xl hover:scale-105 transition-all duration-500 animate-slide-up border-2 ${getHouseColor(winner.house)} cursor-pointer group`} 
+                  className={`hover:shadow-xl hover:scale-105 transition-all duration-500 animate-slide-up border-2 ${getGradeColor(winner.gradeSection)} cursor-pointer group`} 
                   style={{ animationDelay: `${index * 0.1}s` }}
                   onClick={() => navigate('/winners')}
                 >
@@ -126,8 +141,8 @@ const Index = () => {
                     </div>
                     <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors duration-300">{winner.name}</h3>
                     <p className="text-muted-foreground mb-3">{winner.event}</p>
-                    <Badge variant="outline" className={`${getHouseColor(winner.house)} border-current transition-all duration-300`}>
-                      {winner.house} House
+                    <Badge variant="outline" className={`${getGradeColor(winner.gradeSection)} border-current transition-all duration-300`}>
+                      Grade {winner.gradeSection}
                     </Badge>
                     <div className="mt-3 text-sm text-muted-foreground">
                       {winner.position === 1 ? '🥇 First Place' : 

@@ -8,15 +8,19 @@ import {
   doc,
 } from 'firebase/firestore';
 
-export interface House {
+export interface Grade {
   name: string;
   score: number;
   rank: number;
-  color: 'tagore' | 'delany' | 'gandhi' | 'aloysius';
+  level: 'LKG' | 'UKG' | '1' | '2' | '3' | '4';
+  section: 'A' | 'B' | 'C' | 'D' | 'E';
+  fullName: string; // e.g., "LKG-A", "1-B", etc.
 }
 
 export interface Winner {
-  house: string;
+  grade: 'LKG' | 'UKG' | '1' | '2' | '3' | '4';
+  section: 'A' | 'B' | 'C' | 'D' | 'E';
+  gradeSection: string; // e.g., "LKG-A", "1-B", etc.
   position: number;
   studentName: string;
   studentClass: string;
@@ -35,17 +39,30 @@ export interface Event {
   winners?: Winner[];
   hasResults?: boolean;
   position?: number;
-  house?: string;
+  grade?: string;
+  section?: string;
   date?: string;
 }
 
-// Define houses in frontend
-const HOUSE_LIST: Omit<House, 'score' | 'rank'>[] = [
-  { name: 'Tagore', color: 'tagore' },
-  { name: 'Gandhi', color: 'gandhi' },
-  { name: 'Aloysius', color: 'aloysius' },
-  { name: 'Delany', color: 'delany' },
+// Define grade sections in frontend
+const GRADE_SECTIONS: { level: 'LKG' | 'UKG' | '1' | '2' | '3' | '4', sections: ('A' | 'B' | 'C' | 'D' | 'E')[] }[] = [
+  { level: 'LKG', sections: ['A', 'B', 'C', 'D', 'E'] },
+  { level: 'UKG', sections: ['A', 'B', 'C', 'D', 'E'] },
+  { level: '1', sections: ['A', 'B', 'C', 'D', 'E'] },
+  { level: '2', sections: ['A', 'B', 'C', 'D', 'E'] },
+  { level: '3', sections: ['A', 'B', 'C', 'D', 'E'] },
+  { level: '4', sections: ['A', 'B', 'C', 'D'] },
 ];
+
+// Generate all grade-section combinations
+const GRADE_LIST: Omit<Grade, 'score' | 'rank'>[] = GRADE_SECTIONS.flatMap(({ level, sections }) =>
+  sections.map(section => ({
+    name: `${level}-${section}`,
+    level,
+    section,
+    fullName: `${level}-${section}`
+  }))
+);
 
 export const useSparkData = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -132,37 +149,62 @@ export const useSparkData = () => {
     }
   }, []);
 
-  // Calculate houses scores and ranks from events with results
-  const houses: House[] = HOUSE_LIST.map(house => {
+  // Calculate grade scores and ranks from events with results
+  const grades: Grade[] = GRADE_LIST.map(grade => {
     const score = events
       .filter(event => event.hasResults && event.winners)
       .flatMap(event => event.winners || [])
-      .filter(winner => winner.house === house.name)
+      .filter(winner => winner.gradeSection === grade.fullName)
       .reduce((sum, winner) => sum + (winner.points || 0), 0);
-    return { ...house, score, rank: 0 };
+    return { ...grade, score, rank: 0 };
   });
   
   // Sort by score (highest first)
-  houses.sort((a, b) => b.score - a.score);
+  grades.sort((a, b) => b.score - a.score);
   
-  // Assign ranks with proper tie handling
+  // Assign ranks with proper tie handling (no rank skipping)
   let currentRank = 1;
-  houses.forEach((house, idx) => {
-    if (idx > 0 && house.score < houses[idx - 1].score) {
-      currentRank = idx + 1;
+  grades.forEach((grade, idx) => {
+    if (grade.score === 0) {
+      // Don't assign ranks to grades with zero points
+      grade.rank = 0;
+    } else if (idx === 0) {
+      // First grade with points gets rank 1
+      grade.rank = currentRank;
+    } else if (grade.score < grades[idx - 1].score) {
+      // Score is lower than previous, increment rank by 1 (no skipping)
+      currentRank++;
+      grade.rank = currentRank;
+    } else {
+      // Same score as previous, keep same rank
+      grade.rank = currentRank;
     }
-    house.rank = currentRank;
+  });
+
+  // Group grades by level for category champions
+  const gradesByLevel = GRADE_SECTIONS.map(({ level }) => {
+    const levelGrades = grades.filter(grade => grade.level === level);
+    // Only set champion if someone has scored points
+    const champion = levelGrades.length > 0 && levelGrades[0].score > 0 ? levelGrades[0] : null;
+    return {
+      level,
+      grades: levelGrades,
+      champion
+    };
   });
 
   return {
     events,
     winners,
-    houses,
+    grades,
+    gradesByLevel,
     loading,
     addEvent,
     addEventTemplate,
     addWinnersToEvent,
     addWinnerPhoto,
     calculatePoints,
+    GRADE_SECTIONS,
+    GRADE_LIST,
   };
 };

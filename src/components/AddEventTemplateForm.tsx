@@ -115,12 +115,13 @@ const AddEventTemplateForm: React.FC<AddEventTemplateFormProps> = ({ onEventCrea
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Cat1">Cat 1 (LKG- UKG)</SelectItem>
-                  <SelectItem value="Cat2">Cat 2 (class 1-2)</SelectItem>
-                  <SelectItem value="Cat3">Cat 3 (class 3-5)</SelectItem>
-                  <SelectItem value="Cat4">Cat 4 (class 6-8)</SelectItem>
-                  <SelectItem value="Cat5">Cat 5 (class 9-12)</SelectItem>
-                  <SelectItem value="All">All Categories</SelectItem>
+                  <SelectItem value="LKG">LKG</SelectItem>
+                  <SelectItem value="UKG">UKG</SelectItem>
+                  <SelectItem value="1">Grade 1</SelectItem>
+                  <SelectItem value="2">Grade 2</SelectItem>
+                  <SelectItem value="3">Grade 3</SelectItem>
+                  <SelectItem value="4">Grade 4</SelectItem>
+                  <SelectItem value="All">All Grades</SelectItem>
                 </SelectContent>
               </Select>
             </div>

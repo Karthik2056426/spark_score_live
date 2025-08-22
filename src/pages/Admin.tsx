@@ -24,7 +24,7 @@ const CLOUDINARY_UPLOAD_PRESET = 'SPA-juniors';
 const CLOUDINARY_CLOUD_NAME = 'dz9oojl6x';
 
 const Admin: React.FC = () => {
-  const { events, houses, addEvent, addEventTemplate, addWinnersToEvent, calculatePoints } = useSparkData();
+  const { events, grades, gradesByLevel, addEvent, addEventTemplate, addWinnersToEvent, calculatePoints, GRADE_SECTIONS, GRADE_LIST } = useSparkData();
   const { toast } = useToast();
   const [eventSearchQuery, setEventSearchQuery] = useReactState('');
   const [user, setUser] = useState(null);
@@ -89,7 +89,8 @@ const Admin: React.FC = () => {
     name: '',
     category: '',
     type: '',
-    house: '',
+    grade: '',
+    section: '',
     position: '',
     selectedEventId: '' // Add this to store the selected event ID
   });
@@ -138,14 +139,19 @@ const Admin: React.FC = () => {
     if (!selectedEvent) return "Search and select event";
     const getCategoryDisplay = (category: string) => {
       const categoryMap: Record<string, string> = {
+        'LKG': 'LKG',
+        'UKG': 'UKG', 
+        '1': 'Grade 1',
+        '2': 'Grade 2',
+        '3': 'Grade 3',
+        '4': 'Grade 4',
+        'All': 'All Grades',
+        // Legacy mappings for existing data
         'Cat1': 'Cat 1 (LKG- UKG)', 
         'Cat2': 'Cat 2 (class 1-2)', 
         'Cat3': 'Cat 3 (class 3-5)', 
         'Cat4': 'Cat 4 (class 6-8)', 
-        'Cat5': 'Cat 5 (class 9-12)', 
-        'All': 'All Categories',
-        // Legacy mappings for existing data
-        '1': 'Grade 1', '2': 'Grade 2', '3': 'Grade 3', '4': 'Grade 4', '5': 'Grade 5', '6': 'Grade 6',
+        'Cat5': 'Cat 5 (class 9-12)',
         'Junior': 'Junior (1-5)', 'Middle': 'Middle (6-8)', 'Senior': 'Senior (9-12)'
       };
       return categoryMap[category] || category;
@@ -155,14 +161,14 @@ const Admin: React.FC = () => {
 
   // Multi-winner event result form state
   const [multiWinners, setMultiWinners] = useState([
-    { house: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
-    { house: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
-    { house: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
+    { grade: '', section: '', position: 1, points: 0 },
+    { grade: '', section: '', position: 2, points: 0 },
+    { grade: '', section: '', position: 3, points: 0 },
   ]);
 
   // Add a new winner row
   const addWinnerRow = () => {
-    setMultiWinners(prev => [...prev, { house: '', position: prev.length + 1, studentName: '', studentClass: '', image: '', points: 0 }]);
+    setMultiWinners(prev => [...prev, { grade: '', section: '', position: prev.length + 1, points: 0 }]);
   };
 
   // Remove a winner row by index
@@ -175,24 +181,7 @@ const Admin: React.FC = () => {
     setMultiWinners(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
   };
 
-  // Handle image upload to Cloudinary
-  const handleImageUpload = async (file: File, idx: number) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    try {
-      const res = await axios.post(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-        formData
-      );
-      const imageUrl = res.data.secure_url;
-      setMultiWinners(prev =>
-        prev.map((row, i) => (i === idx ? { ...row, image: imageUrl } : row))
-      );
-    } catch (err) {
-      alert('Image upload failed');
-    }
-  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -258,7 +247,7 @@ const Admin: React.FC = () => {
       });
       return;
     }
-    const validWinners = multiWinners.filter(w => w.house && w.position && w.studentName && w.studentClass);
+    const validWinners = multiWinners.filter(w => w.grade && w.section && w.position && w.points >= 0);
     if (validWinners.length === 0) {
       toast({
         title: "No Winners",
@@ -269,12 +258,14 @@ const Admin: React.FC = () => {
     }
     try {
       const winnersWithPoints = validWinners.map(winner => ({
-        house: winner.house,
+        grade: winner.grade,
+        section: winner.section,
+        gradeSection: `${winner.grade}-${winner.section}`,
         position: Number(winner.position),
-        studentName: winner.studentName,
-        studentClass: winner.studentClass,
-        points: customResultsMode ? Number(winner.points) : calculatePoints(Number(winner.position), eventForm.type as 'Individual' | 'Group'),
-        image: winner.image || ''
+        studentName: `${winner.grade}-${winner.section} Winner`, // Default name
+        studentClass: `${winner.grade}`,
+        points: Number(winner.points),
+        image: ''
       }));
       // 2. If editing, update winners; else, add winners
       await addWinnersToEvent(eventForm.selectedEventId, winnersWithPoints);
@@ -282,11 +273,11 @@ const Admin: React.FC = () => {
         title: isEditing ? "Results Updated" : "Event Results Added",
         description: `${validWinners.length} winner(s) ${isEditing ? 'updated' : 'added'} for ${selectedEvent.name}`
       });
-      setEventForm({ name: '', category: '', type: '', house: '', position: '', selectedEventId: '' });
+      setEventForm({ name: '', category: '', type: '', grade: '', section: '', position: '', selectedEventId: '' });
       setMultiWinners([
-        { house: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
-        { house: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
-        { house: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
+        { grade: '', section: '', position: 1, points: 0 },
+        { grade: '', section: '', position: 2, points: 0 },
+        { grade: '', section: '', position: 3, points: 0 },
       ]);
       setIsEditing(false);
       setEditingWinners([]);
@@ -542,9 +533,9 @@ const Admin: React.FC = () => {
                               setEditingWinners([]);
                               setIsEditing(false);
                               setMultiWinners([
-                                { house: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
-                                { house: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
-                                { house: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
+                                { grade: '', section: '', position: 1, points: 0 },
+                                { grade: '', section: '', position: 2, points: 0 },
+                                { grade: '', section: '', position: 3, points: 0 },
                               ]);
                             }
                           }
@@ -574,19 +565,19 @@ const Admin: React.FC = () => {
                                 // Map category values to display names
                                 const getCategoryDisplay = (category: string) => {
                                   const categoryMap: Record<string, string> = {
+                                    'LKG': 'LKG',
+                                    'UKG': 'UKG', 
+                                    '1': 'Grade 1',
+                                    '2': 'Grade 2',
+                                    '3': 'Grade 3',
+                                    '4': 'Grade 4',
+                                    'All': 'All Grades',
+                                    // Legacy mappings for existing data
                                     'Cat1': 'Cat 1 (LKG- UKG)', 
                                     'Cat2': 'Cat 2 (class 1-2)', 
                                     'Cat3': 'Cat 3 (class 3-5)', 
                                     'Cat4': 'Cat 4 (class 6-8)', 
-                                    'Cat5': 'Cat 5 (class 9-12)', 
-                                    'All': 'All Categories',
-                                    // Legacy mappings for existing data
-                                    '1': 'Grade 1',
-                                    '2': 'Grade 2', 
-                                    '3': 'Grade 3',
-                                    '4': 'Grade 4',
-                                    '5': 'Grade 5',
-                                    '6': 'Grade 6',
+                                    'Cat5': 'Cat 5 (class 9-12)',
                                     'Junior': 'Junior (1-5)',
                                     'Middle': 'Middle (6-8)',
                                     'Senior': 'Senior (9-12)'
@@ -619,12 +610,13 @@ const Admin: React.FC = () => {
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Cat1">Cat 1 (LKG- UKG)</SelectItem>
-                          <SelectItem value="Cat2">Cat 2 (class 1-2)</SelectItem>
-                          <SelectItem value="Cat3">Cat 3 (class 3-5)</SelectItem>
-                          <SelectItem value="Cat4">Cat 4 (class 6-8)</SelectItem>
-                          <SelectItem value="Cat5">Cat 5 (class 9-12)</SelectItem>
-                          <SelectItem value="All">All Categories</SelectItem>
+                          <SelectItem value="LKG">LKG</SelectItem>
+                          <SelectItem value="UKG">UKG</SelectItem>
+                          <SelectItem value="1">Grade 1</SelectItem>
+                          <SelectItem value="2">Grade 2</SelectItem>
+                          <SelectItem value="3">Grade 3</SelectItem>
+                          <SelectItem value="4">Grade 4</SelectItem>
+                          <SelectItem value="All">All Grades</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -653,54 +645,35 @@ const Admin: React.FC = () => {
                           ×
                         </button>
                         <div className="flex-1">
-                          <Label htmlFor={`house-${idx}`}>House</Label>
-                          <Select value={winner.house} onValueChange={value => updateWinnerRow(idx, 'house', value)}>
-                            <SelectTrigger id={`house-${idx}`}>
-                              <SelectValue placeholder="Select house" />
+                          <Label htmlFor={`grade-${idx}`}>Grade</Label>
+                          <Select value={winner.grade} onValueChange={value => updateWinnerRow(idx, 'grade', value)}>
+                            <SelectTrigger id={`grade-${idx}`}>
+                              <SelectValue placeholder="Select grade" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Tagore">Tagore</SelectItem>
-                              <SelectItem value="Gandhi">Gandhi</SelectItem>
-                              <SelectItem value="Aloysius">Aloysius</SelectItem>
-                              <SelectItem value="Delany">Delany</SelectItem>
+                              <SelectItem value="LKG">LKG</SelectItem>
+                              <SelectItem value="UKG">UKG</SelectItem>
+                              <SelectItem value="1">1</SelectItem>
+                              <SelectItem value="2">2</SelectItem>
+                              <SelectItem value="3">3</SelectItem>
+                              <SelectItem value="4">4</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        <div className="w-40">
-                          <Label htmlFor={`studentName-${idx}`}>Student Name</Label>
-                          <Input
-                            id={`studentName-${idx}`}
-                            value={winner.studentName}
-                            onChange={e => updateWinnerRow(idx, 'studentName', e.target.value)}
-                            placeholder="Enter name"
-                            required
-                          />
-                        </div>
                         <div className="w-32">
-                          <Label htmlFor={`studentClass-${idx}`}>Class</Label>
-                          <Input
-                            id={`studentClass-${idx}`}
-                            value={winner.studentClass}
-                            onChange={e => updateWinnerRow(idx, 'studentClass', e.target.value)}
-                            placeholder="e.g. 5A"
-                            required
-                          />
+                          <Label htmlFor={`section-${idx}`}>Section</Label>
+                          <Select value={winner.section} onValueChange={value => updateWinnerRow(idx, 'section', value)}>
+                            <SelectTrigger id={`section-${idx}`}>
+                              <SelectValue placeholder="Select section" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {winner.grade && GRADE_SECTIONS.find(g => g.level === winner.grade)?.sections.map(section => (
+                                <SelectItem key={section} value={section}>{section}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                        <div className="w-40">
-                          <Label htmlFor={`photo-${idx}`}>Photo</Label>
-                          <Input
-                            id={`photo-${idx}`}
-                            type="file"
-                            accept="image/png, image/webp"
-                            onChange={e => {
-                              const file = e.target.files?.[0];
-                              if (file) handleImageUpload(file, idx);
-                            }}
-                          />
-                          {winner.image && (
-                            <img src={winner.image} alt="Winner" className="w-16 h-16 mt-2 rounded-full object-cover" />
-                          )}
-                        </div>
+
                         <div className="w-32">
                           <Label htmlFor={`position-${idx}`}>Position</Label>
                           <Input
@@ -761,12 +734,12 @@ const Admin: React.FC = () => {
                           setIsEditing(false);
                           setEditingWinners([]);
                           // Reset form
-                          setEventForm({ name: '', category: '', type: '', house: '', position: '', selectedEventId: '' });
+                          setEventForm({ name: '', category: '', type: '', grade: '', section: '', position: '', selectedEventId: '' });
                           // Reset winners to default
                           setMultiWinners([
-                            { house: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
-                            { house: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
-                            { house: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
+                            { grade: '', section: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
+                            { grade: '', section: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
+                            { grade: '', section: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
                           ]);
                           // Clear selected event ref
                           selectedEventRef.current = '';
