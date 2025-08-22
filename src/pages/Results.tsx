@@ -18,15 +18,16 @@ const Results: React.FC = () => {
   const [emblaApi, setEmblaApi] = useState<any>(null);
   const [autoPlay, setAutoPlay] = useState(true);
   const [showNavbar, setShowNavbar] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
 
-  // Auto-advance carousel every 8 seconds
+  // Auto-advance carousel every 8 seconds (pause on hover)
   useEffect(() => {
-    if (!emblaApi || !autoPlay) return;
+    if (!emblaApi || !autoPlay || isHovering) return;
     const interval = setInterval(() => {
       emblaApi.scrollNext();
     }, 8000);
     return () => clearInterval(interval);
-  }, [emblaApi, autoPlay]);
+  }, [emblaApi, autoPlay, isHovering]);
 
   // Handle mouse position for navbar visibility
   useEffect(() => {
@@ -306,7 +307,13 @@ const Results: React.FC = () => {
 
         {/* Carousel */}
         <div className="max-w-6xl mx-auto">
-          <Carousel className="w-full" opts={{ loop: true }} setApi={setEmblaApi}>
+          <Carousel 
+            className="w-full" 
+            opts={{ loop: true }} 
+            setApi={setEmblaApi}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
+          >
             <CarouselContent>
               {carouselSlides}
             </CarouselContent>

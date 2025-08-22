@@ -528,7 +528,13 @@ const Admin: React.FC = () => {
                             if (selectedEvent.winners && selectedEvent.winners.length > 0) {
                               setEditingWinners(selectedEvent.winners);
                               setIsEditing(true);
-                              setMultiWinners(selectedEvent.winners.map(w => ({ ...w, image: w.image || '' })));
+                              // Map existing winners to new format
+                              setMultiWinners(selectedEvent.winners.map(w => ({
+                                grade: w.grade || '',
+                                section: w.section || '',
+                                position: w.position || 1,
+                                points: w.points || 0
+                              })));
                             } else {
                               setEditingWinners([]);
                               setIsEditing(false);
@@ -737,9 +743,9 @@ const Admin: React.FC = () => {
                           setEventForm({ name: '', category: '', type: '', grade: '', section: '', position: '', selectedEventId: '' });
                           // Reset winners to default
                           setMultiWinners([
-                            { grade: '', section: '', position: 1, studentName: '', studentClass: '', image: '', points: 0 },
-                            { grade: '', section: '', position: 2, studentName: '', studentClass: '', image: '', points: 0 },
-                            { grade: '', section: '', position: 3, studentName: '', studentClass: '', image: '', points: 0 },
+                            { grade: '', section: '', position: 1, points: 0 },
+                            { grade: '', section: '', position: 2, points: 0 },
+                            { grade: '', section: '', position: 3, points: 0 },
                           ]);
                           // Clear selected event ref
                           selectedEventRef.current = '';
