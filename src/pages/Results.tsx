@@ -18,18 +18,17 @@ const Results: React.FC = () => {
   const [emblaApi, setEmblaApi] = useState<any>(null);
   const [autoPlay, setAutoPlay] = useState(true);
   const [showNavbar, setShowNavbar] = useState(false);
-  const [isHovering, setIsHovering] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showLegend, setShowLegend] = useState(false);
 
-  // Auto-advance carousel every 8 seconds (pause on hover)
+  // Auto-advance carousel every 8 seconds
   useEffect(() => {
-    if (!emblaApi || !autoPlay || isHovering) return;
+    if (!emblaApi || !autoPlay) return;
     const interval = setInterval(() => {
       emblaApi.scrollNext();
     }, 8000);
     return () => clearInterval(interval);
-  }, [emblaApi, autoPlay, isHovering]);
+  }, [emblaApi, autoPlay]);
 
   // Track current slide and show legend only on matrix table slides
   useEffect(() => {
@@ -386,8 +385,6 @@ const Results: React.FC = () => {
             className="w-full" 
             opts={{ loop: true }} 
             setApi={setEmblaApi}
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
           >
             <CarouselContent>
               {carouselSlides}
