@@ -115,7 +115,7 @@ const Results: React.FC = () => {
             {/* Category Header */}
             <div className="text-center">
               <h2 className="text-4xl font-bold text-foreground mb-2">
-                Grade {categoryData.level} Overview
+                Grade {categoryData.level}
               </h2>
               <p className="text-muted-foreground">
                 {categoryData.sections.length} sections • {sortedSections.filter(s => s.score > 0).length} active
@@ -127,7 +127,6 @@ const Results: React.FC = () => {
               <Card className={`border-2 bg-gradient-to-r ${getCategoryColor(categoryData.level)} text-white`}>
                 <CardContent className="p-6 text-center">
                   <Crown className="h-8 w-8 mx-auto mb-2 text-yellow-300" />
-                  <h3 className="text-2xl font-bold mb-1">Category Champion</h3>
                   <p className="text-xl opacity-90 mb-2">{levelData.champion.fullName}</p>
                   <div className="text-3xl font-bold">{levelData.champion.score} points</div>
                 </CardContent>
@@ -142,13 +141,6 @@ const Results: React.FC = () => {
                   className={`border-2 bg-gradient-to-r ${getCategoryColor(categoryData.level)} text-white transition-all duration-300 hover:scale-105`}
                 >
                   <CardContent className="p-4 text-center">
-                    <div className="text-2xl mb-2">
-                      {section.score === 0 ? '⭕' : 
-                       section.rank === 1 ? '🥇' : 
-                       section.rank === 2 ? '🥈' : 
-                       section.rank === 3 ? '🥉' : 
-                       `#${section.rank}`}
-                    </div>
                     <h4 className="text-lg font-bold text-white mb-1">
                       {section.fullName}
                     </h4>
@@ -156,11 +148,6 @@ const Results: React.FC = () => {
                       {section.score}
                     </div>
                     <p className="text-sm opacity-90">points</p>
-                    {section.score > 0 && (
-                      <Badge variant="outline" className="mt-2 text-xs border-white text-white bg-white/20">
-                        Rank {section.rank}
-                      </Badge>
-                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -180,7 +167,7 @@ const Results: React.FC = () => {
       if (categoryEvents.length > 0) {
         slides.push(
           <CarouselItem key={`${categoryData.level}-matrix`}>
-            <div className="px-6 pt-3 pb-6 space-y-3">
+            <div className="px-2 sm:px-4 pt-3 pb-6 space-y-3 h-screen flex flex-col">
               {/* Category Header */}
               <div className="text-center">
                 <h2 className="text-4xl font-bold text-foreground mb-2">
@@ -190,15 +177,15 @@ const Results: React.FC = () => {
 
 
               {/* Event-Section Matrix Table */}
-              <Card>
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse table-fixed">
+              <Card className="flex-1 min-h-0">
+                <CardContent className="p-0 h-full">
+                  <div className="overflow-auto h-full">
+                    <table className="w-full border-collapse table-fixed text-xs sm:text-sm">
                       {/* Header Row */}
                       <thead>
                         <tr className="bg-secondary/20">
-                          <th className="text-left p-4 border font-semibold" style={{width: '25%'}}>
-                            Events
+                          <th className="text-left p-2 sm:p-3 border font-semibold" style={{width: '25%'}}>
+                            <div className="truncate">Events</div>
                           </th>
                           {categoryData.sections.map(section => {
                             const sectionData = sortedSections.find(s => s.section === section);
@@ -207,19 +194,19 @@ const Results: React.FC = () => {
                             return (
                               <th 
                                 key={section} 
-                                className={`text-center p-3 border font-semibold ${
+                                className={`text-center p-1 sm:p-2 border font-semibold ${
                                   isTopScore ? 'bg-yellow-400 text-black' : ''
                                 }`}
                                 style={{width: `${75/categoryData.sections.length}%`}}
                               >
                                 <div>
-                                  <div className="font-bold">
+                                  <div className="font-bold text-xs sm:text-sm">
                                     {categoryData.level}-{section}
                                   </div>
-                                  <div className={`text-sm font-semibold mt-1 ${
+                                  <div className={`text-xs font-semibold mt-0.5 ${
                                     isTopScore ? 'text-black' : 'text-muted-foreground'
                                   }`}>
-                                    {sectionData ? `${sectionData.score} pts` : '0 pts'}
+                                    {sectionData ? `${sectionData.score}` : '0'}
                                   </div>
                                 </div>
                               </th>
@@ -233,9 +220,9 @@ const Results: React.FC = () => {
                         {categoryEvents.map((event, eventIdx) => (
                           <tr key={event.id} className={eventIdx % 2 === 0 ? 'bg-background' : 'bg-secondary/10'}>
                             {/* Event Name Column */}
-                            <td className="p-3 border font-medium">
+                            <td className="p-1 sm:p-2 border font-medium">
                               <div className="truncate">
-                                <div className="font-semibold text-foreground truncate" title={event.name}>
+                                <div className="font-semibold text-foreground truncate text-xs sm:text-sm" title={event.name}>
                                   {event.name}
                                 </div>
                               </div>
@@ -249,15 +236,15 @@ const Results: React.FC = () => {
                               ) || [];
                               
                               return (
-                                <td key={section} className="p-2 border text-center">
+                                <td key={section} className="p-1 border text-center">
                                   {sectionWinners.length > 0 ? (
-                                    <div className="space-y-1">
+                                    <div className="space-y-0.5">
                                       {sectionWinners
                                         .sort((a, b) => a.position - b.position)
                                         .map((winner, idx) => (
                                           <div 
                                             key={idx}
-                                            className={`inline-block px-2 py-1 rounded text-xs font-bold mr-1 ${
+                                            className={`inline-block px-1 py-0.5 rounded text-xs font-bold mr-0.5 ${
                                               winner.position === 1 ? 'bg-yellow-500 text-white' :
                                               winner.position === 2 ? 'bg-gray-400 text-white' :
                                               winner.position === 3 ? 'bg-orange-600 text-white' :
@@ -368,11 +355,11 @@ const Results: React.FC = () => {
               <div className="flex items-center gap-1">
                 <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-orange-600 text-white">🥉</span>
                 <span className="text-white">10</span>
-              </div>
-            </div>
-          </div>
-          </div>
-        </div>
+                    </div>
+                      </div>
+                    </div>
+                        </div>
+                      </div>
       )}
 
       {/* Hidden Header that shows on hover */}
