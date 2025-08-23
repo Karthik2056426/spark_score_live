@@ -38,9 +38,13 @@ const Results: React.FC = () => {
       const slideIndex = emblaApi.selectedScrollSnap();
       setCurrentSlide(slideIndex);
       
-      // Show legend only on matrix table slides (every 2nd slide starting from slide 1)
-      // Slide 0: LKG Overview, Slide 1: LKG Matrix, Slide 2: UKG Overview, Slide 3: UKG Matrix, etc.
-      const isMatrixSlide = slideIndex % 2 === 1;
+      // Calculate total slides per category (1 overview + N event details + 1 matrix)
+      const slidesPerCategory = 1 + events.filter(e => e.hasResults && e.winners).length + 1;
+      const categoryIndex = Math.floor(slideIndex / slidesPerCategory);
+      const slideWithinCategory = slideIndex % slidesPerCategory;
+      
+      // Show legend only on matrix table slides (last slide of each category)
+      const isMatrixSlide = slideWithinCategory === slidesPerCategory - 1;
       setShowLegend(isMatrixSlide);
     };
 
@@ -155,14 +159,94 @@ const Results: React.FC = () => {
         </CarouselItem>
       );
 
-      // 2. Event-Section Matrix Table
-      // Get all events for this category
+      // 2. Individual Event Detail Slides
       const categoryEvents = events.filter(event => 
         event.hasResults && 
         event.winners && 
         event.category === categoryData.level
       );
 
+      categoryEvents.forEach((event) => {
+        if (event.winners && event.winners.length > 0) {
+          const eventWinners = event.winners
+            .filter(winner => winner.gradeSection?.startsWith(categoryData.level))
+            .sort((a, b) => a.position - b.position);
+
+          slides.push(
+            <CarouselItem key={`${event.id}-winners`}>
+              <div className="px-2 sm:px-4 pt-3 pb-6 space-y-4 h-screen flex flex-col">
+                {/* Event Header */}
+                <div className="text-center">
+                  <h2 className="text-3xl font-bold text-foreground mb-1">
+                    {event.name}
+                  </h2>
+                  <p className="text-lg text-muted-foreground">
+                    Grade {categoryData.level} • {event.type}
+                  </p>
+                </div>
+
+                {/* Winners Grid */}
+                <div className="flex-1 flex items-center justify-center">
+                  <div className="w-full max-w-6xl">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-max">
+                      {eventWinners.map((winner, index) => (
+                        <Card key={`${winner.gradeSection}-${winner.position}`} className="border-2 hover:shadow-lg transition-all duration-300">
+                          <CardContent className="p-4 text-center">
+                            {/* Winner Photo */}
+                            {winner.image ? (
+                              <div className="flex justify-center mb-3">
+                                <img
+                                  src={winner.image}
+                                  alt={winner.studentName}
+                                  className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex justify-center mb-3">
+                                <div className="w-24 h-24 rounded-full bg-gray-200 border-4 border-gray-300 flex items-center justify-center">
+                                  <span className="text-2xl text-gray-400">👤</span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Winner Info */}
+                            <h3 className="text-lg font-bold text-foreground mb-1">
+                              {winner.studentName || 'Winner'}
+                            </h3>
+                            
+                            <div className="space-y-1">
+                              <Badge className={`${
+                                categoryData.level === 'LKG' ? 'bg-red-500' :
+                                categoryData.level === 'UKG' ? 'bg-orange-500' :
+                                categoryData.level === '1' ? 'bg-yellow-500' :
+                                categoryData.level === '2' ? 'bg-green-500' :
+                                categoryData.level === '3' ? 'bg-blue-500' :
+                                categoryData.level === '4' ? 'bg-purple-500' :
+                                'bg-gray-500'
+                              } text-white`}>
+                                {winner.gradeSection}
+                              </Badge>
+                              
+                              <div className="text-sm text-muted-foreground">
+                                {winner.position === 1 ? '1st Place' :
+                                 winner.position === 2 ? '2nd Place' :
+                                 winner.position === 3 ? '3rd Place' :
+                                 `${winner.position}th Place`}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CarouselItem>
+          );
+        }
+      });
+
+      // 3. Event-Section Matrix Table
       if (categoryEvents.length > 0) {
         slides.push(
           <CarouselItem key={`${categoryData.level}-matrix`}>
