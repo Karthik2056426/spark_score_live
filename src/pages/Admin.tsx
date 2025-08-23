@@ -163,14 +163,14 @@ const Admin: React.FC = () => {
 
   // Multi-winner event result form state
   const [multiWinners, setMultiWinners] = useState([
-    { grade: '', section: '', position: 1, points: 0 },
-    { grade: '', section: '', position: 2, points: 0 },
-    { grade: '', section: '', position: 3, points: 0 },
+    { grade: '', section: '', position: 1, points: 0, studentName: '', image: '' },
+    { grade: '', section: '', position: 2, points: 0, studentName: '', image: '' },
+    { grade: '', section: '', position: 3, points: 0, studentName: '', image: '' },
   ]);
 
   // Add a new winner row
   const addWinnerRow = () => {
-    setMultiWinners(prev => [...prev, { grade: '', section: '', position: prev.length + 1, points: 0 }]);
+    setMultiWinners(prev => [...prev, { grade: '', section: '', position: prev.length + 1, points: 0, studentName: '', image: '' }]);
   };
 
   // Remove a winner row by index
@@ -181,6 +181,37 @@ const Admin: React.FC = () => {
   // Update a winner row
   const updateWinnerRow = (idx: number, field: string, value: any) => {
     setMultiWinners(prev => prev.map((row, i) => i === idx ? { ...row, [field]: value } : row));
+  };
+
+  // Handle image upload to Cloudinary
+  const handleImageUpload = async (file: File, winnerIndex: number) => {
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    try {
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+        formData
+      );
+      
+      const imageUrl = response.data.secure_url;
+      updateWinnerRow(winnerIndex, 'image', imageUrl);
+      
+      toast({
+        title: "Image Uploaded",
+        description: "Winner photo uploaded successfully!"
+      });
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
 
@@ -250,7 +281,7 @@ const Admin: React.FC = () => {
       });
       return;
     }
-    const validWinners = multiWinners.filter(w => w.grade && w.section && w.position && w.points >= 0);
+    const validWinners = multiWinners.filter(w => w.grade && w.section && w.position && w.points >= 0 && w.studentName.trim());
     if (validWinners.length === 0) {
       toast({
         title: "No Winners",
@@ -265,10 +296,10 @@ const Admin: React.FC = () => {
         section: winner.section as 'A' | 'B' | 'C' | 'D' | 'E',
         gradeSection: `${winner.grade}-${winner.section}`,
         position: Number(winner.position),
-        studentName: `${winner.grade}-${winner.section} Winner`, // Default name
+        studentName: winner.studentName.trim(),
         studentClass: `${winner.grade}`,
         points: Number(winner.points),
-        image: ''
+        image: winner.image || ''
       }));
       // 2. If editing, update winners; else, add winners
       await addWinnersToEvent(eventForm.selectedEventId, winnersWithPoints);
@@ -278,9 +309,9 @@ const Admin: React.FC = () => {
       });
       setEventForm({ name: '', category: '', type: '', grade: '', section: '', position: '', selectedEventId: '' });
       setMultiWinners([
-        { grade: '', section: '', position: 1, points: 0 },
-        { grade: '', section: '', position: 2, points: 0 },
-        { grade: '', section: '', position: 3, points: 0 },
+        { grade: '', section: '', position: 1, points: 0, studentName: '', image: '' },
+        { grade: '', section: '', position: 2, points: 0, studentName: '', image: '' },
+        { grade: '', section: '', position: 3, points: 0, studentName: '', image: '' },
       ]);
       setIsEditing(false);
       setEditingWinners([]);
@@ -536,15 +567,17 @@ const Admin: React.FC = () => {
                                 grade: w.grade || '',
                                 section: w.section || '',
                                 position: w.position || 1,
-                                points: w.points || 0
+                                points: w.points || 0,
+                                studentName: w.studentName || '',
+                                image: w.image || ''
                               })));
                             } else {
                               setEditingWinners([]);
                               setIsEditing(false);
                               setMultiWinners([
-                                { grade: '', section: '', position: 1, points: 0 },
-                                { grade: '', section: '', position: 2, points: 0 },
-                                { grade: '', section: '', position: 3, points: 0 },
+                                { grade: '', section: '', position: 1, points: 0, studentName: '', image: '' },
+                                { grade: '', section: '', position: 2, points: 0, studentName: '', image: '' },
+                                { grade: '', section: '', position: 3, points: 0, studentName: '', image: '' },
                               ]);
                             }
                           }
@@ -683,7 +716,7 @@ const Admin: React.FC = () => {
                           </Select>
                         </div>
 
-                        <div className="w-32">
+                        <div className="w-20">
                           <Label htmlFor={`position-${idx}`}>Position</Label>
                           <Input
                             id={`position-${idx}`}
@@ -694,7 +727,7 @@ const Admin: React.FC = () => {
                             required
                           />
                         </div>
-                        <div className="w-32">
+                        <div className="w-24">
                           <Label htmlFor={`points-${idx}`}>Points</Label>
                           {true ? ( // Always show custom mode input
                             <Input
@@ -711,6 +744,51 @@ const Admin: React.FC = () => {
                               +{calculatePoints(Number(winner.position), eventForm.type as 'Individual' | 'Group')} pts
                             </div>
                           )}
+                        </div>
+                        <div className="flex-[2]">
+                          <Label htmlFor={`studentName-${idx}`}>Student Name</Label>
+                          <Input
+                            id={`studentName-${idx}`}
+                            type="text"
+                            value={winner.studentName}
+                            onChange={e => updateWinnerRow(idx, 'studentName', e.target.value)}
+                            placeholder="Enter student name"
+                            required
+                          />
+                        </div>
+                        <div className="w-40">
+                          <Label htmlFor={`image-${idx}`}>Photo</Label>
+                          <div className="space-y-2">
+                            <Input
+                              id={`image-${idx}`}
+                              type="file"
+                              accept="image/*"
+                              onChange={e => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  handleImageUpload(file, idx);
+                                }
+                              }}
+                              className="text-sm"
+                            />
+                            {winner.image && (
+                              <div className="relative">
+                                <img 
+                                  src={winner.image} 
+                                  alt="Winner" 
+                                  className="w-16 h-16 object-cover rounded border"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => updateWinnerRow(idx, 'image', '')}
+                                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs hover:bg-red-600"
+                                  title="Remove image"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -746,9 +824,9 @@ const Admin: React.FC = () => {
                           setEventForm({ name: '', category: '', type: '', grade: '', section: '', position: '', selectedEventId: '' });
                           // Reset winners to default
                           setMultiWinners([
-                            { grade: '', section: '', position: 1, points: 0 },
-                            { grade: '', section: '', position: 2, points: 0 },
-                            { grade: '', section: '', position: 3, points: 0 },
+                            { grade: '', section: '', position: 1, points: 0, studentName: '', image: '' },
+                            { grade: '', section: '', position: 2, points: 0, studentName: '', image: '' },
+                            { grade: '', section: '', position: 3, points: 0, studentName: '', image: '' },
                           ]);
                           // Clear selected event ref
                           selectedEventRef.current = '';

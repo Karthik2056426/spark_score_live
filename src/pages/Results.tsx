@@ -19,6 +19,8 @@ const Results: React.FC = () => {
   const [autoPlay, setAutoPlay] = useState(true);
   const [showNavbar, setShowNavbar] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [showLegend, setShowLegend] = useState(false);
 
   // Auto-advance carousel every 8 seconds (pause on hover)
   useEffect(() => {
@@ -28,6 +30,28 @@ const Results: React.FC = () => {
     }, 8000);
     return () => clearInterval(interval);
   }, [emblaApi, autoPlay, isHovering]);
+
+  // Track current slide and show legend only on matrix table slides
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const updateSlide = () => {
+      const slideIndex = emblaApi.selectedScrollSnap();
+      setCurrentSlide(slideIndex);
+      
+      // Show legend only on matrix table slides (every 2nd slide starting from slide 1)
+      // Slide 0: LKG Overview, Slide 1: LKG Matrix, Slide 2: UKG Overview, Slide 3: UKG Matrix, etc.
+      const isMatrixSlide = slideIndex % 2 === 1;
+      setShowLegend(isMatrixSlide);
+    };
+
+    emblaApi.on('select', updateSlide);
+    updateSlide(); // Initial call
+
+    return () => {
+      emblaApi.off('select', updateSlide);
+    };
+  }, [emblaApi]);
 
   // Handle mouse position for navbar visibility
   useEffect(() => {
@@ -145,139 +169,157 @@ const Results: React.FC = () => {
         </CarouselItem>
       );
 
-      // 2. Individual Section Detail Slides
-      sortedSections.forEach((section) => {
-        const sectionEvents = events
-          .filter(event => event.hasResults && event.winners)
-          .flatMap(event => 
-            event.winners!
-              .filter(winner => winner.gradeSection === section.fullName)
-              .map(winner => ({
-                ...winner,
-                eventName: event.name,
-                eventCategory: event.category,
-                eventType: event.type
-              }))
-          )
-          .sort((a, b) => b.points - a.points);
+      // 2. Event-Section Matrix Table
+      // Get all events for this category
+      const categoryEvents = events.filter(event => 
+        event.hasResults && 
+        event.winners && 
+        event.category === categoryData.level
+      );
 
+      if (categoryEvents.length > 0) {
         slides.push(
-          <CarouselItem key={`${section.fullName}-details`}>
-            <div className="p-6 space-y-6">
-              {/* Section Summary with Heading on Left */}
-              <Card className={`border-2 bg-gradient-to-r ${getCategoryColor(categoryData.level)} text-white`}>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-8">
-                    {/* Left Side - Section Info */}
-                    <div className="flex-1">
-                      <h2 className="text-4xl font-bold mb-2">
-                        {section.fullName} Details
-                      </h2>
-                      <p className="text-lg opacity-90">
-                        Rank #{section.rank > 0 ? section.rank : 'Unranked'} in Grade {categoryData.level}
-                      </p>
-                    </div>
-                    
-                    {/* Right Side - Stats */}
-                    <div className="grid grid-cols-3 gap-8 text-center">
-                      <div className="space-y-2">
-                        <Trophy className="h-6 w-6 mx-auto text-yellow-300" />
-                        <div className="text-xl font-bold">{section.score}</div>
-                        <p className="text-sm opacity-90">Total Points</p>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-xl">
-                          {section.rank === 1 ? '🥇' : 
-                           section.rank === 2 ? '🥈' : 
-                           section.rank === 3 ? '🥉' : 
-                           section.rank > 0 ? `#${section.rank}` : '⭕'}
-                        </div>
-                        <div className="text-xl font-bold">
-                          {section.rank > 0 ? `${section.rank}` : 'N/A'}
-                        </div>
-                        <p className="text-sm opacity-90">Rank</p>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="text-xl font-bold">{sectionEvents.length}</div>
-                        <div className="text-xl font-bold">Events</div>
-                        <p className="text-sm opacity-90">Won</p>
-                      </div>
-                    </div>
+          <CarouselItem key={`${categoryData.level}-matrix`}>
+            <div className="px-6 pt-3 pb-6 space-y-3">
+              {/* Category Header */}
+              <div className="text-center">
+                <h2 className="text-4xl font-bold text-foreground mb-2">
+                  Grade {categoryData.level}
+                </h2>
+              </div>
+
+
+              {/* Event-Section Matrix Table */}
+              <Card>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse table-fixed">
+                      {/* Header Row */}
+                      <thead>
+                        <tr className="bg-secondary/20">
+                          <th className="text-left p-4 border font-semibold" style={{width: '25%'}}>
+                            Events
+                          </th>
+                          {categoryData.sections.map(section => {
+                            const sectionData = sortedSections.find(s => s.section === section);
+                            const isTopScore = sectionData && levelData.champion && sectionData.fullName === levelData.champion.fullName;
+                            
+                            return (
+                              <th 
+                                key={section} 
+                                className={`text-center p-3 border font-semibold ${
+                                  isTopScore ? 'bg-yellow-400 text-black' : ''
+                                }`}
+                                style={{width: `${75/categoryData.sections.length}%`}}
+                              >
+                                <div>
+                                  <div className="font-bold">
+                                    {categoryData.level}-{section}
+                                  </div>
+                                  <div className={`text-sm font-semibold mt-1 ${
+                                    isTopScore ? 'text-black' : 'text-muted-foreground'
+                                  }`}>
+                                    {sectionData ? `${sectionData.score} pts` : '0 pts'}
+                                  </div>
+                                </div>
+                              </th>
+                            );
+                          })}
+                        </tr>
+                      </thead>
+                      
+                      {/* Event Rows */}
+                      <tbody>
+                        {categoryEvents.map((event, eventIdx) => (
+                          <tr key={event.id} className={eventIdx % 2 === 0 ? 'bg-background' : 'bg-secondary/10'}>
+                            {/* Event Name Column */}
+                            <td className="p-3 border font-medium">
+                              <div className="truncate">
+                                <div className="font-semibold text-foreground truncate" title={event.name}>
+                                  {event.name}
+                                </div>
+                              </div>
+                            </td>
+                            
+                            {/* Section Position Columns */}
+                            {categoryData.sections.map(section => {
+                              const sectionFullName = `${categoryData.level}-${section}`;
+                              const sectionWinners = event.winners?.filter(
+                                winner => winner.gradeSection === sectionFullName
+                              ) || [];
+                              
+                              return (
+                                <td key={section} className="p-2 border text-center">
+                                  {sectionWinners.length > 0 ? (
+                                    <div className="space-y-1">
+                                      {sectionWinners
+                                        .sort((a, b) => a.position - b.position)
+                                        .map((winner, idx) => (
+                                          <div 
+                                            key={idx}
+                                            className={`inline-block px-2 py-1 rounded text-xs font-bold mr-1 ${
+                                              winner.position === 1 ? 'bg-yellow-500 text-white' :
+                                              winner.position === 2 ? 'bg-gray-400 text-white' :
+                                              winner.position === 3 ? 'bg-orange-600 text-white' :
+                                              'bg-blue-500 text-white'
+                                            }`}
+                                          >
+                                            {winner.position === 1 ? '🥇' :
+                                             winner.position === 2 ? '🥈' :
+                                             winner.position === 3 ? '🥉' :
+                                             winner.position}
+                                          </div>
+                                        ))}
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400 text-xs">-</span>
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Events Table */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Trophy className="h-5 w-5" />
-                    <span>Events & Points Breakdown</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {sectionEvents.length > 0 ? (
-                    <div className="space-y-3">
-                      {sectionEvents.map((event, index) => (
-                        <div 
-                          key={`${event.eventName}-${event.position}`}
-                          className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary/20 transition-colors"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="text-xl">
-                              {event.position === 1 ? '🥇' : 
-                               event.position === 2 ? '🥈' : 
-                               event.position === 3 ? '🥉' : '🏅'}
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-foreground">{event.eventName}</h4>
-                              <p className="text-sm text-muted-foreground">
-                                {event.eventType} • {event.eventCategory}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <Badge className={
-                              event.position === 1 ? 'bg-yellow-500 text-black' :
-                              event.position === 2 ? 'bg-gray-400 text-black' :
-                              event.position === 3 ? 'bg-orange-500 text-white' :
-                              'bg-blue-500 text-white'
-                            }>
-                              {event.position === 1 ? '1st' : 
-                               event.position === 2 ? '2nd' : 
-                               event.position === 3 ? '3rd' : 
-                               `${event.position}th`}
-                            </Badge>
-                            <div className="text-lg font-bold text-foreground mt-1">
-                              +{event.points} pts
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                      
-                      {/* Total Row */}
-                      <div className="border-t pt-3 mt-4">
-                        <div className="flex justify-between items-center p-3 bg-primary/10 rounded-lg">
-                          <div className="font-bold text-lg">Total Points</div>
-                          <div className="text-2xl font-bold text-primary">
-                            {section.score} pts
-                          </div>
-                        </div>
-                      </div>
+              {/* Summary Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-foreground">{categoryEvents.length}</div>
+                    <p className="text-sm text-muted-foreground">Total Events</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-foreground">{categoryData.sections.length}</div>
+                    <p className="text-sm text-muted-foreground">Sections</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-foreground">
+                      {sortedSections.filter(s => s.score > 0).length}
                     </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <h4 className="text-lg font-semibold text-foreground mb-2">No Events Won</h4>
-                      <p className="text-muted-foreground">This section hasn't won any events yet.</p>
+                    <p className="text-sm text-muted-foreground">Active Sections</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4 text-center">
+                    <div className="text-2xl font-bold text-foreground">
+                      {levelData.champion ? levelData.champion.score : 0}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                    <p className="text-sm text-muted-foreground">Top Score</p>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </CarouselItem>
         );
-      });
+      }
     });
 
     return slides;
@@ -287,6 +329,52 @@ const Results: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Points Legend - Fixed to viewport - Only show on matrix table slides */}
+      {showLegend && (
+        <div className="fixed top-4 right-4 z-50 bg-gray-800 border border-gray-600 rounded-lg p-2 shadow-lg transition-opacity duration-300">
+          <div className="text-xs font-semibold mb-1 text-center text-white">Points Legend</div>
+          <div className="flex gap-4 text-xs">
+          {/* Individual Events */}
+          <div className="flex flex-col gap-1">
+            <div className="font-medium text-gray-300 text-center">Individual</div>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-1">
+                <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-yellow-500 text-white">🥇</span>
+                <span className="text-white">7</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-gray-400 text-white">🥈</span>
+                <span className="text-white">5</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-orange-600 text-white">🥉</span>
+                <span className="text-white">3</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Group Events */}
+          <div className="flex flex-col gap-1 border-l border-gray-600 pl-4">
+            <div className="font-medium text-gray-300 text-center">Group</div>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-1">
+                <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-yellow-500 text-white">🥇</span>
+                <span className="text-white">15</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-gray-400 text-white">🥈</span>
+                <span className="text-white">12</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="inline-block px-1 py-0.5 rounded text-xs font-bold bg-orange-600 text-white">🥉</span>
+                <span className="text-white">10</span>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+      )}
+
       {/* Hidden Header that shows on hover */}
       <div 
         className={`fixed top-0 left-0 right-0 z-50 transition-transform duration-300 ${
@@ -334,8 +422,8 @@ const Results: React.FC = () => {
               <span className="text-muted-foreground text-sm">
                 +{carouselSlides.length - 20} more
               </span>
-            )}
-          </div>
+                    )}
+                  </div>
 
           {/* Stats Summary */}
           <div className="text-center mt-8 pt-6 border-t">
@@ -349,13 +437,13 @@ const Results: React.FC = () => {
                   {GRADE_SECTIONS.reduce((sum, cat) => sum + cat.sections.length, 0)}
                 </div>
                 <p className="text-sm text-muted-foreground">Total Sections</p>
-              </div>
+                      </div>
               <div>
                 <div className="text-2xl font-bold text-foreground">
                   {grades.filter(g => g.score > 0).length}
-                </div>
+                    </div>
                 <p className="text-sm text-muted-foreground">Active Sections</p>
-              </div>
+                  </div>
               <div>
                 <div className="text-2xl font-bold text-foreground">
                   {events.filter(e => e.hasResults).length}
