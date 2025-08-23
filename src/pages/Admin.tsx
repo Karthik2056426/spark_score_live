@@ -135,7 +135,9 @@ const Admin: React.FC = () => {
   // Helper function to get display text for selected event
   const getSelectedEventDisplay = () => {
     const selectedEventId = eventForm.selectedEventId;
-    const selectedEvent = allEvents.find(e => e.id === selectedEventId);
+    console.log('DEBUG: getSelectedEventDisplay - selectedEventId:', selectedEventId, 'Type:', typeof selectedEventId);
+    const selectedEvent = allEvents.find(e => String(e.id) === String(selectedEventId));
+    console.log('DEBUG: getSelectedEventDisplay - found event:', selectedEvent);
     if (!selectedEvent) return "Search and select event";
     const getCategoryDisplay = (category: string) => {
       const categoryMap: Record<string, string> = {
@@ -186,7 +188,7 @@ const Admin: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!eventForm.name || !eventForm.category || !eventForm.type || !eventForm.house || !eventForm.position) {
+    if (!eventForm.name || !eventForm.category || !eventForm.type || !eventForm.grade || !eventForm.position) {
       toast({
         title: "Missing Fields",
         description: "Please fill in all required fields.",
@@ -199,13 +201,13 @@ const Admin: React.FC = () => {
     
     addEvent({
       name: eventForm.name,
-      category: eventForm.category as 'Junior' | 'Middle' | 'Senior',
+      category: eventForm.category,
       type: eventForm.type as 'Individual' | 'Group'
     });
 
     toast({
       title: "Event Added Successfully",
-      description: `${eventForm.house} earned ${points} points for ${eventForm.name}!`
+      description: `${eventForm.grade}-${eventForm.section} earned ${points} points for ${eventForm.name}!`
     });
 
     // Reset form
@@ -213,7 +215,8 @@ const Admin: React.FC = () => {
       name: '',
       category: '',
       type: '',
-      house: '',
+      grade: '',
+      section: '',
       position: '',
       selectedEventId: ''
     });
@@ -258,8 +261,8 @@ const Admin: React.FC = () => {
     }
     try {
       const winnersWithPoints = validWinners.map(winner => ({
-        grade: winner.grade,
-        section: winner.section,
+        grade: winner.grade as 'LKG' | 'UKG' | '1' | '2' | '3' | '4',
+        section: winner.section as 'A' | 'B' | 'C' | 'D' | 'E',
         gradeSection: `${winner.grade}-${winner.section}`,
         position: Number(winner.position),
         studentName: `${winner.grade}-${winner.section} Winner`, // Default name
@@ -416,10 +419,10 @@ const Admin: React.FC = () => {
           <div className="flex justify-center gap-4 mt-6">
             <Button
               onClick={() => {
-                exportAllData(events, houses);
+                // exportAllData(events, grades); // TODO: Update csvExport to use grades
                 toast({
-                  title: "Export Complete",
-                  description: "All SPARK data exported to CSV file",
+                  title: "Export Disabled",
+                  description: "CSV export temporarily disabled - needs grade update",
                 });
               }}
               variant="outline"
@@ -431,10 +434,10 @@ const Admin: React.FC = () => {
             
             <Button
               onClick={() => {
-                exportSeparateFiles(events, houses);
+                // exportSeparateFiles(events, grades); // TODO: Update csvExport to use grades
                 toast({
-                  title: "Export Complete", 
-                  description: "Data exported to separate CSV files",
+                  title: "Export Disabled",
+                  description: "CSV export temporarily disabled - needs grade update",
                 });
               }}
               variant="outline"
@@ -504,14 +507,14 @@ const Admin: React.FC = () => {
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Select value={eventForm.selectedEventId} onValueChange={(value) => {
-                          console.log('DEBUG: onValueChange called with value:', value);
-                          const selectedEvent = allEvents.find(e => e.id === value);
+                          console.log('DEBUG: onValueChange called with value:', value, 'Type:', typeof value);
+                          console.log('DEBUG: Available event IDs:', allEvents.map(e => ({ id: e.id, type: typeof e.id })));
+                          const selectedEvent = allEvents.find(e => String(e.id) === String(value));
+                          console.log('DEBUG: Found selected event:', selectedEvent);
                           if (selectedEvent) {
-                            // Normalize category
+                            // Keep category as-is for new grade system
                             let normalizedCategory = selectedEvent.category;
-                            if (["1", "2", "3", "4", "5", "6"].includes(selectedEvent.category)) {
-                              normalizedCategory = "Junior";
-                            }
+                            console.log('DEBUG: Original category:', selectedEvent.category, 'Normalized category:', normalizedCategory);
                             // Normalize type
                             let normalizedType = selectedEvent.type;
                             if (normalizedType !== "Individual" && normalizedType !== "Group") {
@@ -551,7 +554,7 @@ const Admin: React.FC = () => {
                               {allEvents.length === 0 ? (
                                 <span className="text-muted-foreground">No events available. Please add an event first.</span>
                               ) : (
-                                eventTemplates.length === 0 ? "Search and select event" : getSelectedEventDisplay()
+                                eventForm.selectedEventId ? getSelectedEventDisplay() : "Search and select event"
                               )}
                             </SelectValue>
                           </SelectTrigger>
